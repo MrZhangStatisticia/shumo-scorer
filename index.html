@@ -114,39 +114,69 @@ th { background:#f7fafc;font-weight:600;color:#4a5568; }
 
 <!-- Transformers.js -->
 <script type="module">
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js';
-env.allowLocalModels = false;
-env.useBrowserCache = true;
-
-// ===== AI MODEL STATE =====
+// ===== AI MODEL (Transformers.js) =====
 let aiReady = false;
 let embedder = null;
-let classifier = null;
-
 const modelStatus = document.getElementById('model-status');
 
-// Try to load embedding model for semantic analysis
-async function loadModels() {
-  modelStatus.textContent = '下载中...';
+async function initAI() {
+  modelStatus.textContent = '加载库...';
   modelStatus.style.color = 'var(--yellow)';
+
+  // Try multiple CDNs for Transformers.js
+  const cdns = [
+    'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js',
+    'https://unpkg.com/@xenova/transformers@2.17.2/dist/transformers.min.js',
+  ];
+
+  let tfMod = null;
+  for(const cdn of cdns) {
+    try {
+      tfMod = await import(cdn);
+      break;
+    } catch(e) { console.log('CDN failed:', cdn); }
+  }
+
+  if(!tfMod) {
+    modelStatus.textContent = '库加载失败';
+    modelStatus.style.color = 'var(--muted)';
+    return;
+  }
+
+  const { pipeline, env } = tfMod;
+  env.allowLocalModels = false;
+  env.useBrowserCache = true;
+  // HuggingFace mirror for China
+  env.remoteHost = 'https://hf-mirror.com';
+  env.remotePathTemplate = '{model}/resolve/{revision}/';
+
+  modelStatus.textContent = '下载模型...';
   try {
-    // Load a small multilingual embedding model (~25MB quantized)
     embedder = await pipeline('feature-extraction', 'Xenova/bge-small-zh-v1.5', {
       quantized: true,
       progress_callback: (p) => {
-        if(p.status === 'progress') modelStatus.textContent = '下载中 '+Math.round(p.progress)+'%';
+        if(p.status === 'progress') modelStatus.textContent = '下载模型 '+Math.round(p.progress||0)+'%';
       }
     });
     modelStatus.textContent = '就绪';
     modelStatus.style.color = 'var(--green)';
     aiReady = true;
   } catch(e) {
-    console.log('AI model load failed:', e.message);
-    modelStatus.textContent = '未加载（使用规则引擎）';
-    modelStatus.style.color = 'var(--muted)';
+    console.log('Model load failed:', e.message);
+    // Try without mirror
+    try {
+      env.remoteHost = 'https://huggingface.co';
+      embedder = await pipeline('feature-extraction', 'Xenova/bge-small-zh-v1.5', { quantized: true });
+      modelStatus.textContent = '就绪';
+      modelStatus.style.color = 'var(--green)';
+      aiReady = true;
+    } catch(e2) {
+      modelStatus.textContent = '未加载（规则引擎可用）';
+      modelStatus.style.color = 'var(--muted)';
+    }
   }
 }
-loadModels();
+initAI();
 
 // ===== SEMANTIC CHECKS (run when model loaded) =====
 async function semanticCheck(text, checkType) {
