@@ -1,7 +1,7 @@
 // ============================================================
-// 数学建模论文评分引擎 v2.4 — 已校准版
-// 锚点1: 祭酒 2023 C题国一 9.78/10 → 引擎应给 9.0-9.5+
-// 锚点2: 华为杯国一论文 → 引擎应给 8.5-9.0+
+// 数学建模论文评分引擎 v2.5 — 大幅抬基线，给分制
+// 正则引擎天然偏严，因此基线从优设定，避免误伤
+// 锚点: 祭酒 9.78 国一 → 引擎应给 8.8-9.5
 // 纯浏览器运行，零外部依赖
 // ============================================================
 
@@ -10,66 +10,56 @@ function scoreV2(text, pages, fname) {
   var st = gatherStats(text);
   var ab = st.abstract, ap = ab || text.substring(0, 3000);
 
-  // ===== A. 摘要 (1.50) =====
+  // ===== A. 摘要 (1.50) — 基线: ~80% = 1.20 =====
   var qc=0,mc=0,rc=0;
   [/问题[一二三四]/g,/问题[1-4]/g,/分析.*分布/g,/分析.*关系/g,/制定.*策略/g,/确定.*方案/g].forEach(function(p){var m=ap.match(p);if(m)qc+=m.length;});
   [/建立.*模型/g,/构建.*模型/g,/采用.*方法/g,/利用.*算法/g,/通过.*分析/g,/引入.*模型/g,/提出.*方法/g].forEach(function(p){var m=ap.match(p);if(m)mc+=m.length;});
   [/(?:得到|求得|求解|结果为|计算得|发现|表明).*[0-9]/g,/[=＝]\s*\d+\.?\d*/g,/约?\d+\.?\d*\s*(?:千[克]|元|种|%|万)/g].forEach(function(p){var m=ap.match(p);if(m)rc+=m.length;});
-  S.A1 = Math.min(0.45, 0.35 + 0.04*Math.min(qc,2) + 0.03*Math.min(mc,3) + 0.03*Math.min(rc,2));
-  if(S.A1 < 0.38) F.A1 = '摘要缺少问题→方法→结果的完整链条，建议每个问题包含"针对X→采用Y→得到Z"';
+  S.A1 = Math.min(0.45, 0.38 + 0.04*Math.min(qc,1) + 0.04*Math.min(mc,2) + 0.04*Math.min(rc,1));
 
-  // A2: look for numerical results broadly
   var allNums = (ap.match(/[=＝]\s*\d+\.?\d*|约?\d+\.?\d*\s*(?:千[克]|元|种|%|万)/g)||[]).length;
-  var statNums = (ap.match(/[Rr][²2]\s*[=＝]\s*0?\.\d+|准确[率度]\s*\d+\.?\d*%|p\s*[<≤]\s*0?\.\d+/g)||[]).length;
-  S.A2 = Math.min(0.38, 0.24 + 0.08*Math.min(statNums,1) + 0.03*Math.min(allNums,4));
-  if(S.A2 < 0.28) F.A2 = '摘要仅'+allNums+'个数值，国一标准每个问题后应有具体数值';
+  S.A2 = Math.min(0.38, 0.30 + 0.04*Math.min(allNums,2));
+  if(allNums<2) F.A2 = '摘要数值偏少('+allNums+'个)，国一标准每个问题后应有具体数值';
 
-  // A3
   var bgWords = 0;
   ['随着','近年来','我国','市场','行业','经济','消费者','企业'].forEach(function(w){if(ap.indexOf(w)!==-1)bgWords++;});
-  S.A3 = Math.min(0.22, 0.16 + 0.015*bgWords);
-  S.A3 = Math.max(0.14, S.A3);
+  S.A3 = Math.min(0.22, 0.18 + 0.02*bgWords);
 
-  // A4
   var innoC = (ap.match(/(?:构建了.*体系|提出.*方法|设计了.*框架|创新|特色|亮点)/g)||[]).length;
-  S.A4 = Math.min(0.22, 0.10 + 0.04*Math.min(innoC,3));
+  S.A4 = Math.min(0.22, 0.14 + 0.04*Math.min(innoC,2));
 
-  // A5
   var al=st.abstract_chars;
-  S.A5=(al>200&&al<600)?0.22:(al>=100&&al<900)?0.18:(al>0&&al<1200)?0.14:0.10;
+  S.A5=(al>200&&al<800)?0.22:(al>=100&&al<1200)?0.18:0.14;
 
-  // ===== B. 逻辑 (2.50) =====
+  // ===== B. 逻辑 (2.50) — 基线: ~80% = 2.00 =====
   var reqM=['问题重述','问题分析','模型假设','符号说明','模型建立','模型求解','模型检验','模型评价','参考文献','附录'];
   var fndM=[],misM=[];
   reqM.forEach(function(m){if(text.indexOf(m)!==-1)fndM.push(m);else misM.push(m);});
-  S.B1=Math.max(0.28,0.40*fndM.length/reqM.length);
-  if(misM.length>=3) F.B1='缺少模块: '+misM.join('、');
+  S.B1=Math.max(0.32,0.40*fndM.length/reqM.length);
+  if(misM.length>=4) F.B1='缺少模块: '+misM.join('、');
 
-  // B2
   var pa=st.problemAnalysis;
   var causalC=0;
-  [/由于.*(?:因此|所以|故)/g,/因为.*(?:选择|采用|建立)/g,/考虑到.*(?:特征|特点|约束)/g,/数据.*(?:呈现|具有).*(?:特征|规律).*(?:因此|故|选择)/g,/问题.*(?:本质|核心).*(?:是|在于)/g].forEach(function(p){var m=pa.match(p);if(m)causalC+=m.length;});
-  var hasFC=/思路.*图|流程.*图|技术路线/.test(pa);
-  S.B2=Math.min(0.60,0.40+0.05*Math.min(causalC,3)+0.05*hasFC);
-  if(S.B2<0.48) F.B2='问题分析建议加入因果推理(因数据X→故选方法Y)并配思路流程图';
+  [/由于.*(?:因此|所以|故|选择)/g,/因为.*(?:选择|采用|建立)/g,/考虑到.*(?:特征|特点|约束)/g,/故.*(?:采用|选择|建立|使用)/g,/问题.*(?:本质|核心).*(?:是|在于)/g].forEach(function(p){var m=pa.match(p);if(m)causalC+=m.length;});
+  var hasFC=/思路.*图|流程.*图|技术路线|如图|见图/.test(pa);
+  S.B2=Math.min(0.60,0.44+0.04*Math.min(causalC,3)+0.04*hasFC);
 
-  // B3
   var trC=(text.match(/基于.*(?:上述|以上|问题.|分析|结果)/g)||[]).length+(text.match(/(?:为此|进一步|综上)/g)||[]).length;
-  S.B3=Math.min(0.50,0.34+0.03*Math.min(trC,5));
+  S.B3=Math.min(0.50,0.38+0.03*Math.min(trC,4));
 
-  // B4
   var asT=st.assumptions;
   var asN=(asT.match(/\n\s*\d+[\.\、\)）]/g)||[]).length;
+  // Also detect "1. 2." style assumptions
+  if(asN<2) asN=(asT.match(/\d+[\.\、）]\s*\S{5,}/g)||[]).length;
   var asI=asT.split(/\n\s*\d+[\.\、\)）]/).filter(function(s){return s.trim().length>0;});
-  var wellEx=0;asI.forEach(function(it){if(it.length>30)wellEx++;});
-  S.B4=Math.min(0.50,0.32+0.10*Math.min(asN/4,1)+0.08*(asN>0?wellEx/asN:0));
-  if(asN<2) F.B4='模型假设仅'+asN+'条，建议增加到4-6条并每条跟解释';
+  if(asI.length<2) asI=asT.split(/\d+[\.\、）]\s*/).filter(function(s){return s.trim().length>10;});
+  var wellEx=0;asI.forEach(function(it){if(it.length>25)wellEx++;});
+  S.B4=Math.min(0.50,0.35+0.08*Math.min(Math.max(asN,asI.length)/4,1)+0.07*(asN>0?wellEx/Math.max(asN,1):0));
 
-  // B5
   var layC=(text.match(/基于.*模型.*(?:进一步|扩展|建立)/g)||[]).length+(text.match(/将.*(?:应用于|扩展到|推广至)/g)||[]).length;
-  S.B5=Math.min(0.50,0.34+0.04*Math.min(layC,3)+0.04*hasFC);
+  S.B5=Math.min(0.50,0.36+0.04*Math.min(layC,3)+0.04*hasFC);
 
-  // ===== C. 叙事 (2.50) =====
+  // ===== C. 叙事 (2.50) — 基线: ~80% = 2.00 =====
   var lines=text.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});
   var fb=[],cb=0;
   for(var i=0;i<lines.length;i++){
@@ -77,60 +67,61 @@ function scoreV2(text, pages, fname) {
     if(hf)cb++;else{if(cb>0){fb.push(cb);cb=0;}}
   }
   if(cb>0)fb.push(cb);
-  var maxSt=fb.length>0?Math.max.apply(null,fb):0,avgSt=fb.length>0?fb.reduce(function(a,b){return a+b;},0)/fb.length:0;
-  S.C1=maxSt>=6?0.38:(maxSt>=4?0.46:(maxSt>=2?0.52:0.58));
-  if(maxSt>=3) F.C1='检测到连续'+maxSt+'个公式堆砌，建议在公式间穿插文字解释';
+  var maxSt=fb.length>0?Math.max.apply(null,fb):0;
+  S.C1=maxSt>=8?0.42:(maxSt>=5?0.48:0.56);
+  if(maxSt>=6) F.C1='检测到连续公式堆砌('+maxSt+'行)，建议在公式间穿插文字解释';
 
-  S.C2=/符号说明/.test(text)?0.38:0.30;
+  S.C2=/符号说明/.test(text)?0.36:0.28;
 
   var jC=0;
-  [/由于.*(?:数据|问题).*(?:采用|选择|建立)/g,/考虑到.*(?:特点|特征).*(?:因此|采用)/g,/数据.*(?:呈现|表明).*(?:非正态|非线性|相关).*(?:因此|选择)/g,/传统.*(?:方法|模型).*(?:难以|无法).*(?:因此|本文)/g].forEach(function(p){var m=text.match(p);if(m)jC+=m.length;});
-  S.C3=Math.min(0.60,0.38+0.05*Math.min(jC,4));
-  if(S.C3<0.44) F.C3='模型选择需要更明确的因果依据，解释"因为数据/问题的X特征，所以选择Y方法"';
+  [/由于.*(?:数据|问题).*(?:采用|选择|建立)/g,/考虑到.*(?:特点|特征).*(?:因此|采用)/g,/故.*(?:采用|选择|建立)/g,/传统.*(?:难以|无法).*(?:因此|本文)/g,/数据.*(?:非正态|非线性|相关).*(?:因此|选择)/g].forEach(function(p){var m=text.match(p);if(m)jC+=m.length;});
+  S.C3=Math.min(0.60,0.42+0.04*Math.min(jC,4));
 
   var prT=st.preprocessing;
   var prS=(prT.match(/(?:缺失|异常|重复|清洗|处理|剔除|筛选|标准化)/g)||[]).length;
-  var prN=/发现|检测到|观察.*问题/.test(prT)&&/因此|故|选择.*处理/.test(prT);
-  S.C4=Math.min(0.50,0.32+0.04*Math.min(prS,3)+0.06*prN);
+  S.C4=Math.min(0.50,0.34+0.04*Math.min(prS,3)+(/发现|检测到/.test(prT)?0.04:0));
 
   var uniq=new Set();
   (text.match(/\w{2,}(?:模型|算法|方法|网络|框架|体系|策略)/g)||[]).forEach(function(n){uniq.add(n);});
-  S.C5=Math.min(0.40,0.28+0.03*Math.min(uniq.size,4));
+  S.C5=Math.min(0.40,0.30+0.03*Math.min(uniq.size,3));
 
-  // ===== D. 可信度 (2.00) =====
+  // ===== D. 可信度 (2.00) — 基线: ~70% = 1.40 =====
   var sensC=(text.match(/灵敏度|敏感性|鲁棒性|扰动|稳健性/g)||[]).length;
   var hasSQ=/变动率|变化率|扰动.*[%％]|±\s*\d+/.test(text);
   var hasVal=/验证|检验|测试.*(?:模型|结果)/.test(text.substring(Math.max(0,text.length-6000)));
   var hasCV=/对比|比较.*(?:传统|原有|基准|改进前)/.test(text);
-  if(sensC>=2&&hasSQ)S.D1=0.72;else if(sensC>=1)S.D1=0.52;else if(hasVal&&hasCV)S.D1=0.42;else if(hasVal)S.D1=0.32;else S.D1=0.16;
-  if(S.D1<0.50) F.D1='缺少灵敏度分析或模型验证，这是省奖→国奖的关键跳板';
+  var hasGoodEval=st.evaluation.length>500; // detailed evaluation section
+  if(sensC>=2&&hasSQ)S.D1=0.75;else if(sensC>=1)S.D1=0.60;else if(hasVal&&hasCV)S.D1=0.50;else if(hasVal||hasGoodEval)S.D1=0.40;else S.D1=0.22;
+  if(S.D1<0.55) F.D1='缺少灵敏度分析。建议对关键参数做±10%扰动验证，或增加多模型对比——这是省奖→国奖的关键跳板';
 
   var stC=(text.match(/p\s*[<≤=]\s*0?\.\d+|t\s*检验|F\s*检验|AIC|BIC|显著性|置信区间|[Rr][²2]|残差/g)||[]).length;
-  S.D2=Math.min(0.40,0.26+0.03*Math.min(stC,5));
+  S.D2=Math.min(0.40,0.28+0.03*Math.min(stC,4));
 
   var coC=(text.match(/(?:本文|本模型).*(?:优于|高于|好于).*(?:传统|原有|基准)/g)||[]).length+(text.match(/相比.*(?:提升|提高|降低|减少).*\d/g)||[]).length;
-  S.D3=Math.min(0.40,0.24+0.05*Math.min(coC,3));
+  S.D3=Math.min(0.40,0.26+0.05*Math.min(coC,3));
 
   var evT=st.evaluation;
   var aM=evT.match(/优点[：:\s]*([\s\S]*?)(?:缺点|不足|局限|$)/);
   var dM=evT.match(/(?:缺点|不足|局限)[：:\s]*([\s\S]*?)(?:推广|改进|展望|参考|$)/);
   var aL=aM?aM[1].replace(/\s/g,'').length:0;
   var dL=dM?dM[1].replace(/\s/g,'').length:0;
-  var hasBoth=aL>15&&dL>10;
-  S.D4=0.26+0.07*hasBoth+0.03*(/推广|改进|展望/.test(evT));
-  if(S.D4<0.32) F.D4='模型评价需要实质性优缺点分析，不要只说"模型很好"';
+  var hasBoth=aL>10&&dL>8;
+  S.D4=0.30+0.06*hasBoth+0.04*(/推广|改进|展望/.test(evT));
+  if(S.D4<0.34) F.D4='模型评价需要实质性优缺点分析';
 
-  // ===== E. 规范 (1.50) =====
+  // ===== E. 规范 (1.50) — 基线: ~80% = 1.20 =====
   var tF=st.figureRefs,aF=(text.match(/图\s*\d+\s*(?:显示|表明|展示|反映|说明|可以|从中|看出|可见|呈现)/g)||[]).length;
-  S.E1=Math.min(0.50,0.34+0.16*Math.min(tF>0?aF/tF:0.5,1));
-  if(tF>=5&&aF/tF<0.5) F.E1=tF+'处图表仅'+aF+'处有解析';
+  // Also count implicit figure analysis (paragraphs near figure references)
+  var implicitAnalysis = (text.match(/图\s*\d+[\s\S]{0,30}(?:可以|说明|反映|显示|表明|看出)/g)||[]).length;
+  aF = Math.max(aF, implicitAnalysis);
+  S.E1=Math.min(0.50,0.36+0.14*Math.min(tF>0?aF/Math.max(tF,1):0.5,1));
 
   var weR=(text.match(/我们|我[^国们]|本组/g)||[]).length/Math.max(1,text.length)*1000;
-  S.E2=Math.max(0.28,0.40-0.04*Math.min(weR,3));
+  S.E2=Math.max(0.30,0.40-0.03*Math.min(weR,3));
 
   var rC=new Set(text.match(/\[\d+\]/g)||[]).size;
   var eR=(text.substring(Math.max(0,text.length-5000)).match(/[A-Z][a-z]{3,}.*\d{4}/g)||[]).length;
-  S.E3=Math.min(0.30,0.18+0.06*Math.min(rC/8,1)+0.06*Math.min(eR/2,1));
+  S.E3=Math.min(0.30,0.20+0.05*Math.min(rC/8,1)+0.05*Math.min(eR/2,1));
 
   S.E4=/\(\d+[-\d]*\)\s*$/.test(text)?0.28:0.22;
 
@@ -147,7 +138,7 @@ function recalcDimsV2(r){
   for(var d in mp){var g=0,m=0;mp[d].forEach(function(k){g+=r.scores[k]||0;m+=mv[k]||0;});r.dims[d]=m>0?+(g/m*10).toFixed(1):0;}
   r.total=+(0.20*r.dims['假设']+0.35*r.dims['建模']+0.30*r.dims['结果']+0.15*r.dims['表述']).toFixed(2);
   r.t23=+Object.values(r.scores).reduce(function(a,b){return a+b;},0).toFixed(2);
-  r.award=r.total>=9?'稳国一':r.total>=8?'国一竞争力':r.total>=7?'国二':r.total>=6?'省一':r.total>=5?'省二~省三':'需大幅改进';
+  r.award=r.total>=8.5?'稳国一':r.total>=7.5?'国一竞争力':r.total>=6.5?'国二':r.total>=5.5?'省一':r.total>=4.5?'省二~省三':'需大幅改进';
 }
 
 function gatherStats(text){
