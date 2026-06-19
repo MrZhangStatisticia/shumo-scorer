@@ -27,7 +27,7 @@ body { font-family: -apple-system,"Microsoft YaHei","PingFang SC",sans-serif; ba
 .card { background:var(--card); border-radius:10px; padding:22px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
 
 /* ========== MODAL ========== */
-.modal-overlay { position:fixed; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center; }
+.modal-overlay { position:fixed; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:1000;display:none;align-items:center;justify-content:center; }
 .modal { background:#fff; border-radius:12px; padding:28px 30px; max-width:600px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,.25); position:relative; }
 .modal h2 { font-size:1.2em; color:var(--primary); margin-bottom:16px; text-align:center; }
 .modal .steps { counter-reset:step; }
@@ -134,12 +134,12 @@ th { background:#f7fafc;font-weight:600;color:#4a5568; }
 <!-- ========== SCRIPTS ========== -->
 <script>
 // ===== Welcome modal =====
-(function(){
+(function showWelcome(){
   var modal = document.getElementById('welcome-modal');
-  if(!modal) return;
-  // Show unless explicitly hidden
-  if(localStorage.getItem('shumo-hide-welcome-v2')) return;
-  modal.style.display = 'flex';
+  if(!modal){ setTimeout(showWelcome, 100); return; }
+  if(!localStorage.getItem('shumo-hide-welcome-v2')){
+    modal.style.display = 'flex';
+  }
 })();
 function closeModal(){ document.getElementById('welcome-modal').style.display='none'; }
 function dontShowAgain(){ localStorage.setItem('shumo-hide-welcome','1'); closeModal(); }
