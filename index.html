@@ -57,11 +57,44 @@ th { background:#f7fafc;font-weight:600; }
   <div class="upload-zone" id="drop-zone">
     <div class="icon">📄</div>
     <p><b>拖拽PDF到此处</b> 或点击按钮选择文件</p>
-    <button class="btn" onclick="document.getElementById('file-input').click()">选择 PDF 文件</button>
-    <input type="file" id="file-input" accept=".pdf">
-    <p id="msg">等待上传...</p>
+    <button class="btn" id="pick-btn">选择 PDF 文件</button>
+    <input type="file" id="file-input" accept=".pdf" style="display:none">
+    <p id="msg"><span style="color:#38a169">页面已就绪 ✓</span> 正在加载PDF引擎...</p>
   </div>
 </div>
+
+<script>
+// The simplest possible test - this MUST work
+(function(){
+  var btn = document.getElementById('pick-btn');
+  var inp = document.getElementById('file-input');
+  var msg = document.getElementById('msg');
+  var dz  = document.getElementById('drop-zone');
+
+  // Button click
+  btn.onclick = function(){ inp.click(); };
+
+  // File selected
+  inp.onchange = function(e){
+    if(e.target.files.length > 0){
+      msg.innerHTML = '<span style="color:#38a169">已选择文件: '+e.target.files[0].name+' ('+(e.target.files[0].size/1024).toFixed(0)+'KB)，开始处理...</span>';
+      handleFile(e.target.files[0]);
+    }
+  };
+
+  // Drag & drop
+  dz.ondragover = function(e){ e.preventDefault(); dz.classList.add('dragover'); };
+  dz.ondragleave = function(e){ e.preventDefault(); dz.classList.remove('dragover'); };
+  dz.ondrop = function(e){
+    e.preventDefault();
+    dz.classList.remove('dragover');
+    if(e.dataTransfer.files.length > 0){
+      msg.innerHTML = '<span style="color:#38a169">已拖入文件: '+e.dataTransfer.files[0].name+'，开始处理...</span>';
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+})();
+</script>
 
 <div class="card" id="loading"><div class="spinner"></div><p>正在分析论文...</p><p style="font-size:.8em;color:#718096" id="prog"></p></div>
 
@@ -90,22 +123,7 @@ th { background:#f7fafc;font-weight:600; }
   }, 3000);
 })();
 
-// ====== STEP 1: File input handler ======
-document.getElementById('file-input').addEventListener('change', function(e){
-  if(e.target.files.length > 0) {
-    handleFile(e.target.files[0]);
-  }
-});
-
-// ====== STEP 2: Drag & Drop ======
-var dz = document.getElementById('drop-zone');
-dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('dragover'); });
-dz.addEventListener('dragleave', function(e){ e.preventDefault(); dz.classList.remove('dragover'); });
-dz.addEventListener('drop', function(e){
-  e.preventDefault();
-  dz.classList.remove('dragover');
-  if(e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
-});
+// File input, drag & drop handlers are set inline above (no conflict)
 
 // ====== STEP 3: Process file ======
 function handleFile(file){
