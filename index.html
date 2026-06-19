@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>数学建模论文预评分系统 v2.1</title>
+<title>数学建模论文预评分系统 v2.3</title>
 <style>
 :root {
   --primary: #1a365d; --primary-light: #2f5496; --accent: #e53e3e;
@@ -87,7 +87,7 @@ th { background:#f7fafc;font-weight:600;color:#4a5568; }
 </div>
 
 <div class="header">
-  <h1>数学建模论文预评分系统 <span class="ver">v2.2</span></h1>
+  <h1>数学建模论文预评分系统 <span class="ver">v2.3</span></h1>
   <p class="sub">上传PDF → 提取文本 → 规则评分 + DeepSeek语义增强 → 修改建议</p>
   <div id="ds-bar" style="margin-top:6px;font-size:.75em;opacity:.85">
     <span id="ds-status" style="cursor:pointer" onclick="toggleDS()">🧠 AI增强：关闭</span>
@@ -166,6 +166,7 @@ window.dontShowAgain = function(){ localStorage.setItem('shumo-hide-welcome-v2',
 
 <!-- PDF.js -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="engine_v2.js"></script>
 
 <!-- Main processing script -->
 <script>
@@ -256,7 +257,7 @@ function handleFile(file){
       Promise.all(proms).then(function(){
         document.getElementById('prog').textContent='规则引擎评分...';
         setTimeout(function(){
-          try{ var r=score(text,total,file.name); if(dsEnabled&&dsKey){ document.getElementById('prog').textContent='DeepSeek语义分析...'; deepseekAnalyze(r._ab||'', r._an||'', r._es||'').then(function(ai){ if(ai){ applyAI(r,ai); } document.getElementById('loading').style.display='none'; render(r); }); } else { document.getElementById('loading').style.display='none'; render(r); } }
+          try{ var r=scoreV2(text,total,file.name); if(dsEnabled&&dsKey){ document.getElementById('prog').textContent='DeepSeek语义分析...'; deepseekAnalyze(r._ab||'', r._an||'', r._es||'').then(function(ai){ if(ai){ applyAI(r,ai); } document.getElementById('loading').style.display='none'; render(r); }); } else { document.getElementById('loading').style.display='none'; render(r); } }
           catch(err){ document.getElementById('loading').style.display='none';document.getElementById('upload-card').style.display='block';document.getElementById('msg').innerHTML='<span style="color:var(--red)">出错: '+err.message+'</span>'; }
         },30);
       });
@@ -284,7 +285,7 @@ function applyAI(r, ai){
     r.scores.A4 = Math.min(0.22, r.scores.A4 + 0.06);
     r.scores.C5 = Math.min(0.40, r.scores.C5 + 0.04); r._aiNote = (r._aiNote||'')+'创新表述✓ ';
   }
-  recalcDims(r);
+  recalcDimsV2(r);
 }
 
 // ===== Scoring engine =====
