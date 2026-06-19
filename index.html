@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>数学建模论文预评分系统 v2.0</title>
 <style>
 :root {
@@ -132,8 +135,11 @@ th { background:#f7fafc;font-weight:600;color:#4a5568; }
 <script>
 // ===== Welcome modal =====
 (function(){
-  if(localStorage.getItem('shumo-hide-welcome')) return;
-  document.getElementById('welcome-modal').style.display = 'flex';
+  var modal = document.getElementById('welcome-modal');
+  if(!modal) return;
+  // Show unless explicitly hidden
+  if(localStorage.getItem('shumo-hide-welcome-v2')) return;
+  modal.style.display = 'flex';
 })();
 function closeModal(){ document.getElementById('welcome-modal').style.display='none'; }
 function dontShowAgain(){ localStorage.setItem('shumo-hide-welcome','1'); closeModal(); }
