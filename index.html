@@ -59,7 +59,6 @@ body { font-family: -apple-system,"Microsoft YaHei","PingFang SC",sans-serif; ba
 .tag-ok { background:#c6f6d5;color:#276749; }
 .tag-no { background:#fed7d7;color:#c53030; }
 .fb { background:#fff5f5;border-left:3px solid var(--accent);padding:9px 12px;margin:5px 0;border-radius:0 6px 6px 0;font-size:.82em; }
-.ai-tag { display:inline-block;background:#e8f4fd;color:#2f5496;font-size:.65em;padding:1px 5px;border-radius:3px;margin-left:3px; }
 table { width:100%;border-collapse:collapse;font-size:.74em; }
 th,td { padding:5px 7px;text-align:left;border-bottom:1px solid var(--border); }
 th { background:#f7fafc;font-weight:600;color:#4a5568; }
@@ -88,8 +87,27 @@ th { background:#f7fafc;font-weight:600;color:#4a5568; }
 </div>
 
 <div class="header">
-  <h1>数学建模论文预评分系统 <span class="ver">v2.1</span></h1>
-  <p class="sub">上传PDF → 提取文本 → AI智能评分 → 修改建议</p>
+  <h1>数学建模论文预评分系统 <span class="ver">v2.2</span></h1>
+  <p class="sub">上传PDF → 提取文本 → 规则评分 + DeepSeek语义增强 → 修改建议</p>
+  <div id="ds-bar" style="margin-top:6px;font-size:.75em;opacity:.85">
+    <span id="ds-status" style="cursor:pointer" onclick="toggleDS()">🧠 AI增强：关闭</span>
+  </div>
+</div>
+
+<!-- DeepSeek config modal -->
+<div class="modal-overlay" id="ds-modal">
+<div class="modal" style="max-width:440px">
+  <h2>DeepSeek AI 增强设置</h2>
+  <p style="font-size:.85em;color:var(--muted);margin-bottom:10px">使用 DeepSeek 免费 API 进行语义分析，提升评分准确度。</p>
+  <p style="font-size:.78em;margin:6px 0">API Key（<a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--primary-light)">在此获取</a>，免费注册）</p>
+  <input id="ds-key" type="password" placeholder="sk-xxxxxxxx" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:.9em">
+  <p style="font-size:.7em;color:var(--muted);margin-top:4px">Key 仅存储在浏览器本地，不会上传到任何服务器。</p>
+  <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+    <button class="btn" onclick="saveDS()">保存并启用</button>
+    <button class="btn" style="background:#718096" onclick="document.getElementById('ds-modal').style.display='none'">取消</button>
+  </div>
+  <p id="ds-msg" style="font-size:.75em;color:var(--green);margin-top:8px;text-align:center"></p>
+</div>
 </div>
 
 <div class="container">
@@ -101,7 +119,7 @@ th { background:#f7fafc;font-weight:600;color:#4a5568; }
       <button class="btn" id="pick-btn">📁 选择 PDF 文件</button>
       <button class="btn btn-outline" id="demo-btn">🧪 使用帮助</button>
       <input type="file" id="file-input" accept=".pdf" style="display:none">
-      <p id="msg"><span style="color:var(--green)">✓ 页面就绪</span> · 正在加载AI模型 (<span id="model-status">等待中...</span>)</p>
+      <p id="msg"><span style="color:var(--green)">✓ 页面就绪</span> · 拖拽或点击上传即可</p>
     </div>
   </div>
   <div class="card" id="loading"><div class="spinner"></div><p>正在分析论文...</p><p style="font-size:.8em;color:var(--muted)" id="prog"></p></div>
@@ -112,120 +130,6 @@ th { background:#f7fafc;font-weight:600;color:#4a5568; }
   数学建模论文预评分系统 v2.1 · 规则引擎 + 本地AI语义检测 · 纯浏览器运行 · 零费用
 </div>
 
-<!-- Transformers.js -->
-<script type="module">
-// ===== AI MODEL (Transformers.js) =====
-let aiReady = false;
-let embedder = null;
-const modelStatus = document.getElementById('model-status');
-
-async function initAI() {
-  modelStatus.textContent = '加载库...';
-  modelStatus.style.color = 'var(--yellow)';
-
-  // Try multiple CDNs for Transformers.js
-  const cdns = [
-    'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js',
-    'https://unpkg.com/@xenova/transformers@2.17.2/dist/transformers.min.js',
-  ];
-
-  let tfMod = null;
-  for(const cdn of cdns) {
-    try {
-      tfMod = await import(cdn);
-      break;
-    } catch(e) { console.log('CDN failed:', cdn); }
-  }
-
-  if(!tfMod) {
-    modelStatus.textContent = '库加载失败';
-    modelStatus.style.color = 'var(--muted)';
-    return;
-  }
-
-  const { pipeline, env } = tfMod;
-  env.allowLocalModels = false;
-  env.useBrowserCache = true;
-  // HuggingFace mirror for China
-  env.remoteHost = 'https://hf-mirror.com';
-  env.remotePathTemplate = '{model}/resolve/{revision}/';
-
-  modelStatus.textContent = '下载模型...';
-  try {
-    embedder = await pipeline('feature-extraction', 'Xenova/bge-small-zh-v1.5', {
-      quantized: true,
-      progress_callback: (p) => {
-        if(p.status === 'progress') modelStatus.textContent = '下载模型 '+Math.round(p.progress||0)+'%';
-      }
-    });
-    modelStatus.textContent = '就绪';
-    modelStatus.style.color = 'var(--green)';
-    aiReady = true;
-  } catch(e) {
-    console.log('Model load failed:', e.message);
-    // Try without mirror
-    try {
-      env.remoteHost = 'https://huggingface.co';
-      embedder = await pipeline('feature-extraction', 'Xenova/bge-small-zh-v1.5', { quantized: true });
-      modelStatus.textContent = '就绪';
-      modelStatus.style.color = 'var(--green)';
-      aiReady = true;
-    } catch(e2) {
-      modelStatus.textContent = '未加载（规则引擎可用）';
-      modelStatus.style.color = 'var(--muted)';
-    }
-  }
-}
-initAI();
-
-// ===== SEMANTIC CHECKS (run when model loaded) =====
-async function semanticCheck(text, checkType) {
-  if(!aiReady || !embedder) return null;
-
-  const prompts = {
-    causal_reasoning: {
-      positive: '因为数据具有这个特征，考虑到这个约束条件，因此我们选择这个方法进行建模。',
-      negative: '首先计算平均值，然后画图，最后进行回归分析。接下来做聚类。',
-    },
-    original_rewrite: {
-      positive: '蔬菜作为日常消费品，其市场需求受季节和节假日影响明显，合理的定价策略对商超经营至关重要。',
-      negative: '根据附件1和附件2的数据，需要分析蔬菜各品类及单品销售量的分布规律。',
-    },
-    balanced_evaluation: {
-      positive: '本文模型有以下优点：贴合实际、算法高效。同时存在局限性：假设理想化、未考虑边际效应。未来可引入动态因素优化。',
-      negative: '模型效果很好，结果准确。该模型非常优秀，可以推广。',
-    },
-    innovation_expression: {
-      positive: '本文构建了ARIMA-多元回归-非线性规划的三层递进模型体系，创新性地从商品成本和市场供需双维度构建成本加成定价指标。',
-      negative: '本文使用了K-S检验、斯皮尔曼检验、多元回归、非线性规划和层次分析法。',
-    }
-  };
-
-  const config = prompts[checkType];
-  if(!config) return null;
-
-  try {
-    // Get embeddings
-    const textEmb = await embedder(text.substring(0, 200), { pooling: 'mean', normalize: true });
-    const posEmb = await embedder(config.positive, { pooling: 'mean', normalize: true });
-    const negEmb = await embedder(config.negative, { pooling: 'mean', normalize: true });
-
-    // Cosine similarity
-    const cosSim = (a, b) => {
-      let sum = 0; for(let i=0; i<a.length; i++) sum += a.data[i]*b.data[i]; return sum;
-    };
-    const posScore = cosSim(textEmb, posEmb);
-    const negScore = cosSim(textEmb, negEmb);
-
-    return { score: +(posScore - negScore).toFixed(3), posScore: +posScore.toFixed(3), negScore: +negScore.toFixed(3) };
-  } catch(e) {
-    return null;
-  }
-}
-
-// ===== EXPORT for non-module script =====
-window.semanticCheck = semanticCheck;
-window.isAIReady = function(){ return aiReady; };
 
 // ===== Modal =====
 (function showWelcome(){
@@ -265,6 +169,64 @@ window.dontShowAgain = function(){ localStorage.setItem('shumo-hide-welcome-v2',
 
 <!-- Main processing script -->
 <script>
+// ===== DeepSeek Integration =====
+var dsEnabled = false, dsKey = localStorage.getItem('shumo-ds-key')||'';
+
+function updateDSStatus(){
+  var el = document.getElementById('ds-status');
+  if(dsEnabled && dsKey) el.innerHTML = '🧠 AI增强：<b style="color:#90EE90">已启用</b> (点击设置)';
+  else el.innerHTML = '🧠 AI增强：关闭 (点击开启)';
+}
+updateDSStatus();
+
+function toggleDS(){
+  if(dsEnabled){ dsEnabled=false; updateDSStatus(); return; }
+  document.getElementById('ds-key').value = dsKey;
+  document.getElementById('ds-modal').style.display = 'flex';
+}
+
+function saveDS(){
+  dsKey = document.getElementById('ds-key').value.trim();
+  if(!dsKey){ document.getElementById('ds-msg').textContent='请输入API Key'; return; }
+  localStorage.setItem('shumo-ds-key', dsKey);
+  dsEnabled = true;
+  document.getElementById('ds-modal').style.display = 'none';
+  document.getElementById('ds-msg').textContent = '';
+  updateDSStatus();
+}
+
+async function deepseekAnalyze(abstract, problemAnalysis, modelEval){
+  if(!dsEnabled || !dsKey) return null;
+  var prompt = '你是数学建模竞赛论文评审专家。请对以下论文内容做4项语义判断，只返回JSON：\n'
+    +'{\n'
+    +'  "causal_reasoning": {"has": true/false, "note": "问题分析是否有因果推理(因为X所以选Y)，而非仅是流程描述(首先其次然后)"},\n'
+    +'  "original_rewrite": {"has": true/false, "note": "摘要是否用自己的话改写背景，而非照抄原题附件表述"},\n'
+    +'  "balanced_eval": {"has": true/false, "note": "模型评价是否有实质性优缺点分析，而非仅说模型优秀"},\n'
+    +'  "innovation_express": {"has": true/false, "note": "是否有方法论层面的创新表述，而非仅列举使用了哪些方法"}\n'
+    +'}\n只返回JSON，不要其他文字。\n\n'
+    +'【摘要】\n'+abstract.substring(0,600)+'\n\n'
+    +'【问题分析】\n'+problemAnalysis.substring(0,500)+'\n\n'
+    +'【模型评价】\n'+modelEval.substring(0,400);
+
+  try {
+    var resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+dsKey},
+      body: JSON.stringify({model:'deepseek-chat', messages:[{role:'user',content:prompt}], temperature:0, max_tokens:300})
+    });
+    var data = await resp.json();
+    if(data.choices && data.choices[0]){
+      var txt = data.choices[0].message.content;
+      // Extract JSON
+      var m = txt.match(/\{[\s\S]*\}/);
+      if(m) return JSON.parse(m[0]);
+    }
+  } catch(e){ console.log('DeepSeek error:', e); }
+  return null;
+}
+</script>
+
+<script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
 function handleFile(file){
@@ -294,7 +256,7 @@ function handleFile(file){
       Promise.all(proms).then(function(){
         document.getElementById('prog').textContent='规则引擎评分...';
         setTimeout(function(){
-          try{ var r=score(text,total,file.name); document.getElementById('prog').textContent='AI语义分析...'; runAIChecks(text,r); }
+          try{ var r=score(text,total,file.name); if(dsEnabled&&dsKey){ document.getElementById('prog').textContent='DeepSeek语义分析...'; deepseekAnalyze(r._ab||'', r._an||'', r._es||'').then(function(ai){ if(ai){ applyAI(r,ai); } document.getElementById('loading').style.display='none'; render(r); }); } else { document.getElementById('loading').style.display='none'; render(r); } }
           catch(err){ document.getElementById('loading').style.display='none';document.getElementById('upload-card').style.display='block';document.getElementById('msg').innerHTML='<span style="color:var(--red)">出错: '+err.message+'</span>'; }
         },30);
       });
@@ -306,55 +268,26 @@ function handleFile(file){
   reader.readAsArrayBuffer(file);
 }
 
-// ===== AI semantic checks (non-blocking) =====
-async function runAIChecks(text, r){
-  // Run semantic checks in parallel if model is ready
-  var aiResults = {};
-  if(window.isAIReady && window.isAIReady()){
-    var checks = ['causal_reasoning', 'original_rewrite', 'balanced_evaluation', 'innovation_expression'];
-    for(var i=0; i<checks.length; i++){
-      var ck = checks[i];
-      var targetText = '';
-      switch(ck){
-        case 'causal_reasoning': targetText = extract(text, ['问题分析','二、问题分析'], ['模型假设','三、']); break;
-        case 'original_rewrite': targetText = extract(text, ['摘 要','摘  要','摘要'], ['关键词','关键字']); break;
-        case 'balanced_evaluation': targetText = extract(text, ['模型评价','模型的评价','模型的分析与评价','优缺点分析','六、模型的'], ['参考文献','附录','七、']); break;
-        case 'innovation_expression': targetText = (extract(text, ['摘 要','摘  要','摘要'], ['关键词','关键字']) + ' ' + text.substring(0, 2000)).substring(0, 500); break;
-      }
-      if(targetText.length > 10){
-        try {
-          var result = await window.semanticCheck(targetText, ck);
-          if(result) aiResults[ck] = result;
-        } catch(e){}
-      }
-    }
+// ===== Apply DeepSeek semantic analysis to scores =====
+function applyAI(r, ai){
+  r._ai = ai;
+  if(ai.causal_reasoning && ai.causal_reasoning.has){
+    r.scores.B2 = Math.min(0.60, r.scores.B2 + 0.10); r._aiNote = (r._aiNote||'')+'因果推理✓ ';
   }
-
-  // Apply AI adjustments to scores
-  if(aiResults.causal_reasoning && aiResults.causal_reasoning.score > 0.1){
-    r.scores.B2 = Math.min(0.60, r.scores.B2 + 0.08);
-    r.ai_notes = (r.ai_notes||'') + '; 问题分析检测到因果推理特征';
+  if(ai.original_rewrite && !ai.original_rewrite.has){
+    r.scores.A3 = Math.max(0.10, r.scores.A3 - 0.04);
   }
-  if(aiResults.original_rewrite && aiResults.original_rewrite.score > 0.1){
-    r.scores.A3 = Math.max(0.12, Math.min(0.22, r.scores.A3 + 0.05));
+  if(ai.balanced_eval && ai.balanced_eval.has){
+    r.scores.D4 = Math.min(0.40, r.scores.D4 + 0.06); r._aiNote = (r._aiNote||'')+'优缺平衡✓ ';
   }
-  if(aiResults.balanced_evaluation && aiResults.balanced_evaluation.score > 0.1){
-    r.scores.D4 = Math.min(0.40, r.scores.D4 + 0.05);
-    r.ai_notes = (r.ai_notes||'') + '; 模型评价检测到优缺平衡特征';
+  if(ai.innovation_express && ai.innovation_express.has){
+    r.scores.A4 = Math.min(0.22, r.scores.A4 + 0.06);
+    r.scores.C5 = Math.min(0.40, r.scores.C5 + 0.04); r._aiNote = (r._aiNote||'')+'创新表述✓ ';
   }
-  if(aiResults.innovation_expression && aiResults.innovation_expression.score > 0.1){
-    r.scores.C5 = Math.min(0.40, r.scores.C5 + 0.04);
-    r.ai_notes = (r.ai_notes||'') + '; 检测到创新性表述';
-  }
-
-  // Recalculate dimension scores
   recalcDims(r);
-
-  document.getElementById('loading').style.display='none';
-  render(r);
 }
 
-// ===== Scoring engine (rule-based + AI-augmented) =====
+// ===== Scoring engine =====
 function score(text,pages,fname){
   var scores={},fb={},ab=extract(text,['摘 要','摘  要','摘要'],['关键词','关键字','一、','1.']),ap=ab||text.substring(0,3000);
   var pc=(ap.match(/问题[一二三四1-4]/g)||[]).length,mc=(ap.match(/模型|算法|方法|回归|聚类|优化|预测|检验/g)||[]).length,rc=(ap.match(/结果|得到|求得|求解|计算|发现/g)||[]).length;
@@ -408,7 +341,7 @@ function score(text,pages,fname){
   scores.E3=Math.min(0.30,0.22+0.08*Math.min(rs/10,1)*0.6+0.08*Math.min(er/3,1)*0.4);
   scores.E4=/\(\d+[-\d]*\)\s*$/.test(text)?0.30:0.22;
 
-  var r={fname:fname,pages:pages,chars:text.length,scores:scores,fb:fb,found:fnd,missing:mis,ai_notes:''};
+  var r={fname:fname,pages:pages,chars:text.length,scores:scores,fb:fb,found:fnd,missing:mis,_ab:ab,_an:an,_es:es};
   recalcDims(r);
   return r;
 }
@@ -440,7 +373,7 @@ function render(r){
   h+='<div class="circle" style="background:'+ac+'"><span class="big">'+r.total+'</span><span class="sub">/10分</span></div>';
   h+='<div class="meta"><h2>'+r.fname+' <span class="award" style="background:'+ac+'">'+r.award+'</span></h2>';
   h+='<p class="info">'+r.pages+'页 · '+r.chars.toLocaleString()+'字符 · 23项总分'+r.t23+'/10.00';
-  if(r.ai_notes) h+=' <span class="ai-tag">AI辅助</span>';
+  if(r._aiNote) h+=' <span style="display:inline-block;background:#e8f4fd;color:#2f5496;font-size:.65em;padding:1px 6px;border-radius:3px;margin-left:4px">DeepSeek: '+r._aiNote+'</span>';
   h+='</p><p style="margin-top:4px">';
   r.found.forEach(function(s){h+='<span class="tag tag-ok">'+s+'</span> ';});
   r.missing.forEach(function(s){h+='<span class="tag tag-no">缺:'+s+'</span> ';});
