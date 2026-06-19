@@ -4,326 +4,303 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>数学建模论文预评分系统</title>
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script>
-// Fallback if jsdelivr fails
-if(typeof pdfjsLib === 'undefined') {
-  document.write('<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"><\/script>');
-}
-// Final fallback check
-window.addEventListener('load', function() {
-  if(typeof pdfjsLib === 'undefined') {
-    document.getElementById('upload-card').innerHTML = '<div style="text-align:center;padding:40px;color:#e53e3e"><p style="font-size:1.2em">PDF引擎加载失败</p><p style="margin-top:8px;color:#718096">网络无法访问CDN，请尝试刷新页面或使用VPN</p></div>';
-  }
-});
-</script>
 <style>
-:root {
-  --primary: #1a365d; --primary-light: #2f5496; --accent: #e53e3e;
-  --bg: #f0f4f8; --card: #fff; --text: #2d3748; --text-light: #718096;
-  --border: #e2e8f0; --green: #38a169; --blue: #3182ce; --yellow: #d69e2e;
-  --red: #e53e3e; --purple: #805ad5;
-}
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-.header { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:#fff; padding:20px 0; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.12); }
-.header h1 { font-size:1.4em; font-weight:700; }
-.header p { opacity:.8; font-size:.85em; margin-top:4px; }
-.container { max-width:1100px; margin:0 auto; padding:20px 16px; }
-.card { background:var(--card); border-radius:10px; padding:20px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
-.upload-zone { border:2px dashed var(--border); border-radius:10px; padding:36px 20px; text-align:center; cursor:pointer; transition:all .2s; }
-.upload-zone:hover, .upload-zone.dragover { border-color:var(--primary-light); background:#eff6ff; }
-.upload-zone .icon { font-size:2.5em; margin-bottom:8px; }
-.upload-zone p { color:var(--text-light); font-size:.9em; }
-.upload-zone .btn { display:inline-block; margin-top:12px; padding:10px 28px; background:var(--primary-light); color:#fff; border:none; border-radius:6px; font-size:.95em; cursor:pointer; font-weight:600; }
-.upload-zone .btn:hover { background:#1e40af; }
-.upload-zone .hint { font-size:.75em; color:#a0aec0; margin-top:6px; }
-#loading { display:none; text-align:center; padding:32px 0; }
-.spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--primary-light); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 12px; }
-@keyframes spin { to { transform:rotate(360deg); } }
+body { font-family: "Microsoft YaHei", sans-serif; background:#f0f4f8; color:#2d3748; min-height:100vh; }
+.header { background:linear-gradient(135deg,#1a365d,#2f5496); color:#fff; padding:20px; text-align:center; }
+.header h1 { font-size:1.3em; }
+.header p { font-size:.8em; opacity:.8; margin-top:4px; }
+.card { background:#fff; border-radius:10px; padding:20px; margin:16px auto; max-width:1100px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+.upload-zone { border:2px dashed #cbd5e0; border-radius:10px; padding:50px 20px; text-align:center; cursor:pointer; transition:all .3s; }
+.upload-zone:hover,.dragover { border-color:#2f5496; background:#eff6ff; }
+.upload-zone .icon { font-size:3em; }
+.btn { display:inline-block; margin:12px 4px; padding:10px 28px; background:#2f5496; color:#fff; border:none; border-radius:6px; font-size:.95em; cursor:pointer; font-weight:600; }
+.btn:hover { background:#1e40af; }
+#file-input { display:none; }
+#msg { margin-top:12px; font-size:.85em; color:#718096; min-height:20px; }
+#loading { display:none; text-align:center; padding:30px; }
+#loading .spinner { width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:#2f5496;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px; }
+@keyframes spin { to{transform:rotate(360deg);} }
 #results { display:none; }
-.hero { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
-.circle { width:110px; height:110px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; font-weight:700; flex-shrink:0; }
-.circle .big { font-size:2.2em; line-height:1; }
-.circle .sub { font-size:.75em; opacity:.9; }
-.meta { flex:1; min-width:200px; }
-.meta h2 { font-size:1.2em; margin-bottom:6px; word-break:break-all; }
-.meta .info { color:var(--text-light); font-size:.85em; }
-.award { display:inline-block; padding:4px 16px; border-radius:15px; font-weight:700; font-size:.9em; color:#fff; }
-.bars { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:12px; }
-.bar-item { display:flex; align-items:center; gap:8px; }
-.bar-item .lbl { width:55px; font-size:.8em; text-align:right; }
-.bar-item .bg { flex:1; height:18px; background:var(--border); border-radius:9px; overflow:hidden; }
-.bar-item .fill { height:100%; border-radius:9px; transition:width .6s; }
-.bar-item .v { width:30px; font-size:.8em; font-weight:600; text-align:right; }
-table { width:100%; border-collapse:collapse; font-size:.82em; margin-top:4px; }
-th, td { padding:6px 10px; text-align:left; border-bottom:1px solid var(--border); }
-th { background:#f7fafc; font-weight:600; color:#4a5568; font-size:.78em; }
-.fb { background:#fff5f5; border-left:3px solid var(--accent); padding:10px 14px; margin:6px 0; border-radius:0 6px 6px 0; font-size:.85em; }
-.fb strong { color:var(--accent); }
-.tag { display:inline-block; padding:2px 7px; border-radius:3px; font-size:.72em; margin:2px; }
-.tag-ok { background:#c6f6d5; color:#276749; }
-.tag-no { background:#fed7d7; color:#c53030; }
-.rate-A { color:var(--green); font-weight:700; }
-.rate-B { color:var(--blue); font-weight:700; }
-.rate-C { color:var(--yellow); font-weight:700; }
-.rate-D { color:var(--red); font-weight:700; }
-.section-title { font-size:.95em; font-weight:700; color:var(--primary); margin:16px 0 8px; border-bottom:2px solid var(--primary-light); padding-bottom:4px; }
-.footer { text-align:center; color:var(--text-light); padding:12px; font-size:.78em; }
+.hero { display:flex;align-items:center;gap:20px;flex-wrap:wrap; }
+.circle { width:100px;height:100px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0; }
+.circle .big { font-size:2em;line-height:1; }
+.circle .sub { font-size:.7em;opacity:.9; }
+.meta h2 { font-size:1.1em;margin-bottom:4px; }
+.meta .info { font-size:.8em;color:#718096; }
+.award { display:inline-block;padding:4px 14px;border-radius:15px;font-weight:700;font-size:.85em;color:#fff; }
+.bars { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px; }
+.bar-item { display:flex;align-items:center;gap:6px;font-size:.82em; }
+.bar-item span { flex-shrink:0; }
+.bar-item .bg { flex:1;height:16px;background:#e2e8f0;border-radius:8px;overflow:hidden; }
+.bar-item .fill { height:100%;border-radius:8px;transition:width .6s; }
+.bar-item .v { width:28px;text-align:right;font-weight:600; }
+.tag { display:inline-block;padding:2px 6px;border-radius:3px;font-size:.7em;margin:2px; }
+.tag-ok { background:#c6f6d5;color:#276749; }
+.tag-no { background:#fed7d7;color:#c53030; }
+.fb { background:#fff5f5;border-left:3px solid #e53e3e;padding:10px 14px;margin:6px 0;border-radius:0 6px 6px 0;font-size:.85em; }
+table { width:100%;border-collapse:collapse;font-size:.78em; }
+th,td { padding:5px 8px;text-align:left;border-bottom:1px solid #e2e8f0; }
+th { background:#f7fafc;font-weight:600; }
+.rate-A{color:#38a169;font-weight:700}.rate-B{color:#3182ce;font-weight:700}.rate-C{color:#d69e2e;font-weight:700}.rate-D{color:#e53e3e;font-weight:700}
+.ft { text-align:center;font-size:.75em;color:#a0aec0;padding:12px; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>数学建模论文预评分系统</h1>
-  <p>上传PDF → 提取文本 → 给分制评分 → 修改建议 &nbsp;|&nbsp; 校准锚点: 9.78分国一论文</p>
+  <p>上传PDF → 提取文本 → 给分制评分 → 修改建议 | 校准锚点: 9.78分国一论文</p>
 </div>
 
-<div class="container">
-  <div class="card" id="upload-card">
-    <div class="upload-zone" id="drop-zone">
-      <div class="icon">📄</div>
-      <p><strong>拖拽PDF到此处</strong> 或点击下方按钮</p>
-      <button class="btn" onclick="document.getElementById('file-input').click()">选择 PDF 文件</button>
-      <input type="file" id="file-input" accept=".pdf" hidden onchange="handleFile(this.files[0])">
-      <p class="hint">支持文本版PDF · 纯浏览器运行 · 无需上传服务器</p>
-    </div>
+<div class="card" id="upload-card">
+  <div class="upload-zone" id="drop-zone">
+    <div class="icon">📄</div>
+    <p><b>拖拽PDF到此处</b> 或点击按钮选择文件</p>
+    <button class="btn" onclick="document.getElementById('file-input').click()">选择 PDF 文件</button>
+    <input type="file" id="file-input" accept=".pdf">
+    <p id="msg">等待上传...</p>
   </div>
-
-  <div class="card" id="loading">
-    <div class="spinner"></div>
-    <p>正在分析论文...</p>
-    <p style="font-size:.8em;color:var(--text-light)">提取文本 · 23项评分 · 生成报告</p>
-    <p id="load-progress" style="font-size:.75em;color:var(--text-light);margin-top:8px"></p>
-  </div>
-
-  <div id="results"></div>
 </div>
 
-<div class="footer">校准锚点: 祭酒 2023年C题国一论文 9.78/10 · 给分制 · 四把尺子校准 · 仅作预筛参考</div>
+<div class="card" id="loading"><div class="spinner"></div><p>正在分析论文...</p><p style="font-size:.8em;color:#718096" id="prog"></p></div>
+
+<div id="results"></div>
+<div class="ft">校准锚点: 祭酒 2023年C题国一论文 9.78/10 · 仅作预筛参考</div>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+// ====== STEP 0: Check PDF.js loaded ======
+(function checkLib(){
+  if(typeof pdfjsLib !== 'undefined') {
+    document.getElementById('msg').textContent = 'PDF引擎已就绪，可以上传';
+    return;
+  }
+  setTimeout(function(){
+    if(typeof pdfjsLib !== 'undefined') {
+      document.getElementById('msg').textContent = 'PDF引擎已就绪，可以上传';
+      return;
+    }
+    document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">PDF引擎加载较慢，请稍候...如果持续无法加载，请刷新页面</span>';
+    // Try loading again
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js';
+    s.onload = function(){ document.getElementById('msg').textContent = 'PDF引擎已就绪，可以上传'; };
+    s.onerror = function(){ document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">PDF引擎加载失败，请检查网络或使用VPN访问</span>'; };
+    document.head.appendChild(s);
+  }, 3000);
+})();
 
-const dropZone = document.getElementById('drop-zone');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+// ====== STEP 1: File input handler ======
+document.getElementById('file-input').addEventListener('change', function(e){
+  if(e.target.files.length > 0) {
+    handleFile(e.target.files[0]);
+  }
+});
 
-function handleFile(file) {
-  if (!file || !file.name.toLowerCase().endsWith('.pdf')) { alert('请上传PDF文件'); return; }
+// ====== STEP 2: Drag & Drop ======
+var dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', function(e){ e.preventDefault(); dz.classList.remove('dragover'); });
+dz.addEventListener('drop', function(e){
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  if(e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+});
+
+// ====== STEP 3: Process file ======
+function handleFile(file){
+  if(!file.name.toLowerCase().endsWith('.pdf')){
+    document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">请上传PDF格式文件</span>';
+    return;
+  }
+  if(typeof pdfjsLib === 'undefined'){
+    document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">PDF引擎尚未加载完成，请稍后重试</span>';
+    return;
+  }
+
   document.getElementById('upload-card').style.display = 'none';
   document.getElementById('results').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
-  document.getElementById('load-progress').textContent = '正在读取PDF...';
+  document.getElementById('prog').textContent = '读取PDF文件...';
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const typedarray = new Uint8Array(e.target.result);
-    document.getElementById('load-progress').textContent = '正在提取文本...';
-    pdfjsLib.getDocument({ data: typedarray }).promise.then(function(pdf) {
-      const totalPages = pdf.numPages;
-      let pagesDone = 0;
-      let fullText = '';
-      const promises = [];
-      for (let i = 1; i <= totalPages; i++) {
-        promises.push(pdf.getPage(i).then(function(page) {
-          return page.getTextContent().then(function(content) {
-            const strings = content.items.map(item => item.str);
-            fullText += strings.join(' ') + '\n';
-            pagesDone++;
-            document.getElementById('load-progress').textContent = `提取文本: ${pagesDone}/${totalPages}页...`;
-          });
-        }));
+  var reader = new FileReader();
+  reader.onload = function(e){
+    document.getElementById('prog').textContent = '提取文本...';
+    var data = new Uint8Array(e.target.result);
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+    pdfjsLib.getDocument({data:data}).promise.then(function(pdf){
+      var total = pdf.numPages, done = 0, text = '';
+      var promises = [];
+      for(var i=1; i<=total; i++){
+        promises.push(
+          pdf.getPage(i).then(function(page){
+            return page.getTextContent().then(function(ct){
+              var strs = ct.items.map(function(it){ return it.str; });
+              text += strs.join(' ') + '\n';
+              done++;
+              document.getElementById('prog').textContent = '提取文本: '+done+'/'+total+'页';
+            });
+          })
+        );
       }
-      Promise.all(promises).then(function() {
-        document.getElementById('load-progress').textContent = '正在评分...';
-        setTimeout(() => {
-          const result = scorePaper(fullText, totalPages, file.name);
-          document.getElementById('loading').style.display = 'none';
-          renderResults(result);
-        }, 100);
+      Promise.all(promises).then(function(){
+        document.getElementById('prog').textContent = '正在评分...';
+        setTimeout(function(){
+          try {
+            var result = score(text, total, file.name);
+            document.getElementById('loading').style.display = 'none';
+            render(result);
+          } catch(err) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('upload-card').style.display = 'block';
+            document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">评分出错: '+err.message+'</span>';
+          }
+        }, 50);
       });
-    }).catch(function(err) {
+    }).catch(function(err){
       document.getElementById('loading').style.display = 'none';
       document.getElementById('upload-card').style.display = 'block';
-      alert('PDF解析失败: ' + err.message + '\n\n可能是扫描图像版PDF，请使用文本版PDF。');
+      document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">PDF解析失败: '+err.message+'。请确认是文本版PDF(非扫描图片)。</span>';
     });
   };
   reader.readAsArrayBuffer(file);
 }
 
-// ==================== SCORING ENGINE ====================
-function scorePaper(text, pages, filename) {
-  const scores = {}, feedback = {};
-  const abstract = extractSection(text, ['摘 要','摘  要','摘要'], ['关键词','关键字','一、','1.']);
+// ====== STEP 4: Scoring engine ======
+function score(text, pages, fname){
+  var scores={}, fb={};
+  var ab = extract(text, ['摘 要','摘  要','摘要'], ['关键词','关键字','一、','1.']);
+  var ap = ab || text.substring(0,3000);
 
-  // ---- A. 摘要 ----
-  const ap = abstract.length ? abstract : text.substring(0, 3000);
-  const probCount = (ap.match(/问题[一二三四1-4]/g)||[]).length;
-  const methCount = (ap.match(/模型|算法|方法|回归|聚类|优化|预测|检验/g)||[]).length;
-  const resCount = (ap.match(/结果|得到|求得|求解|计算|发现/g)||[]).length;
-  scores.A1 = Math.min(0.45, +(0.15*(probCount>=3)+0.15*(methCount>=3)+0.15*(resCount>=2)).toFixed(2));
-  if(scores.A1 < 0.30) feedback.A1 = '摘要缺少问题→方法→结果的完整链条';
+  var pc = (ap.match(/问题[一二三四1-4]/g)||[]).length;
+  var mc = (ap.match(/模型|算法|方法|回归|聚类|优化|预测|检验/g)||[]).length;
+  var rc = (ap.match(/结果|得到|求得|求解|计算|发现/g)||[]).length;
+  scores.A1 = Math.min(0.45, 0.15*(pc>=3)+0.15*(mc>=3)+0.15*(rc>=2));
 
-  const nums = (ap.match(/[=＝]\s*\d+\.?\d*|约?\d+\.?\d*\s*(?:千[克]|元|种|%|万)/g)||[]).length;
-  scores.A2 = Math.min(0.38, +(0.38*Math.min(nums/4,1)).toFixed(2));
-  if(scores.A2 < 0.25) feedback.A2 = `摘要仅${nums}个数值，国一标准要求每个问题后紧跟具体数值`;
+  var nc = (ap.match(/[=＝]\s*\d+\.?\d*|约?\d+\.?\d*\s*(?:千[克]|元|种|%|万)/g)||[]).length;
+  scores.A2 = Math.min(0.38, 0.38*Math.min(nc/4,1));
 
-  scores.A3 = (ap.match(/附件[1-4]|根据附件/g)||[]).length === 0 ? 0.22 : 0.12;
-  const abEnd = ap.length > 300 ? ap.substring(ap.length-300) : ap;
-  scores.A4 = Math.min(0.22, +(0.08*(abEnd.match(/创新|特色|亮点|优势/g)||[]).length).toFixed(2));
-  const abPure = ap.replace(/摘要|摘\s*要|关键词|关键字|[\s\n]+/g, '');
-  scores.A5 = abPure.length > 100 && abPure.length < 600 ? 0.22 : (abPure.length < 1000 ? 0.16 : 0.10);
+  scores.A3 = /附件[1-4]|根据附件/.test(ap)?0.12:0.22;
+  var ae = ap.length>300?ap.substring(ap.length-300):ap;
+  scores.A4 = Math.min(0.22, 0.08*(ae.match(/创新|特色|亮点|优势/g)||[]).length);
+  var pu = ap.replace(/摘要|摘\s*要|关键词|关键字|[\s\n]+/g,'');
+  scores.A5 = pu.length>100&&pu.length<600?0.22:(pu.length<1000?0.16:0.10);
+  if(scores.A1<0.30) fb.A1='摘要缺少问题→方法→结果的完整链条';
+  if(scores.A2<0.25) fb.A2='摘要仅'+nc+'个数值，国一标准每个问题后紧跟具体数值';
 
-  // ---- B. 逻辑 ----
-  const required = ['重述','分析','假设','符号','模型','求解','检验','评价','参考','附录'];
-  const found = required.filter(s => text.includes(s));
-  scores.B1 = +(0.40 * found.length / required.length).toFixed(2);
-  if(found.length < 8) feedback.B1 = `缺${required.filter(s=>!text.includes(s)).join('、')}模块`;
+  var req = ['重述','分析','假设','符号','模型','求解','检验','评价','参考','附录'];
+  var fnd=req.filter(function(s){return text.indexOf(s)!==-1;});
+  var mis=req.filter(function(s){return text.indexOf(s)===-1;});
+  scores.B1=0.40*fnd.length/req.length;
+  if(mis.length>2) fb.B1='缺'+mis.join('、')+'模块';
 
-  const analysis = extractSection(text, ['问题分析','二、问题分析'], ['模型假设','三、']);
-  const hasCausal = /因为|由于|考虑到|因此|所以/.test(analysis);
-  const hasChart = /思路.*图|流程.*图/.test(analysis);
-  scores.B2 = Math.min(0.60, +(0.38+0.12*hasCausal+0.10*hasChart).toFixed(2));
-  if(scores.B2 < 0.44) feedback.B2 = '问题分析缺少因果推理或思路流程图';
+  var an=extract(text,['问题分析','二、问题分析'],['模型假设','三、']);
+  scores.B2=Math.min(0.60,0.38+0.12*(/因为|由于|考虑到|因此|所以/.test(an))+0.10*(/思路.*图|流程.*图/.test(an)));
+  if(scores.B2<0.44) fb.B2='问题分析缺少因果推理或思路流程图';
 
-  scores.B3 = Math.min(0.50, +(0.32+0.06*(text.match(/在此基础上|基于.*分析|为此|进一步|综上/g)||[]).length).toFixed(2));
-  const as = extractSection(text, ['模型假设','基本假设'], ['符号说明','四、']);
-  scores.B4 = Math.min(0.50, +(0.35+0.10*((as.match(/\n\s*\d+[\.\、\)）]\s*.{15,}/g)||[]).length/4).toFixed(2));
-  scores.B5 = Math.min(0.50, +(0.32+0.06*(text.match(/在此基础上|进一步|基于.*模型|将.*扩展|利用.*结论/g)||[]).length).toFixed(2));
+  scores.B3=Math.min(0.50,0.32+0.06*(text.match(/在此基础上|基于.*分析|为此|进一步|综上/g)||[]).length);
+  var ase=extract(text,['模型假设','基本假设'],['符号说明','四、']);
+  scores.B4=Math.min(0.50,0.35+0.10*Math.min((ase.match(/\n\s*\d+[\.\、\)）]/g)||[]).length/4,1));
+  scores.B5=Math.min(0.50,0.32+0.06*(text.match(/在此基础上|进一步|基于.*模型|将.*扩展/g)||[]).length);
 
-  // ---- C. 叙事 ----
-  let formulaLines=0, textLines=0;
-  text.split('\n').forEach(l => { l=l.trim(); if(!l) return; if(/[=＝∑∏∫∂√]|\\frac|\\sum/.test(l)) formulaLines++; else textLines++; });
-  const ratio = textLines/Math.max(1,formulaLines);
-  scores.C1 = Math.min(0.60, +(0.45+0.15*Math.min(ratio/1.5,1)).toFixed(2));
-  if(scores.C1 < 0.50) feedback.C1 = '公式与文字比例失衡，需在公式间穿插文字解释';
+  var fl=0,tl=0;
+  text.split('\n').forEach(function(l){l=l.trim();if(!l)return;if(/[=＝∑∏∫∂√]/.test(l))fl++;else tl++;});
+  scores.C1=Math.min(0.60,0.45+0.15*Math.min(tl/Math.max(1,fl)/1.5,1));
+  if(scores.C1<0.50) fb.C1='公式与文字比例失衡';
 
-  scores.C2 = text.includes('符号说明') || text.includes('三线表') ? 0.40 : 0.28;
-  scores.C3 = Math.min(0.60, +(0.35+0.10*(text.match(/由于.+采用|因为.+因此.+模型|考虑到.+建立|基于.+特点.+选择/g)||[]).length).toFixed(2));
-  const prep = extractSection(text, ['数据预处理','数据清洗','数据侧写'], ['模型建立','模型构建']);
-  scores.C4 = Math.min(0.50, +(0.35+0.15*(prep.length>200)).toFixed(2));
-  const models = text.match(/\w{2,}(?:模型|算法|方法|网络|框架|体系)/g)||[];
-  scores.C5 = Math.min(0.40, +(0.30+0.10*Math.min(new Set(models).size/5,1)).toFixed(2));
+  scores.C2=text.indexOf('符号说明')!==-1?0.40:0.28;
+  scores.C3=Math.min(0.60,0.35+0.10*(text.match(/由于.+采用|因为.+因此.+模型|考虑到.+建立/g)||[]).length);
+  var pr=extract(text,['数据预处理','数据清洗','数据侧写'],['模型建立','模型构建']);
+  scores.C4=Math.min(0.50,0.35+0.15*(pr.length>200));
+  var ms=(text.match(/\w{2,}(?:模型|算法|方法|网络|框架|体系)/g)||[]);
+  scores.C5=Math.min(0.40,0.30+0.10*Math.min(new Set(ms).size/5,1));
 
-  // ---- D. 可信度 ----
-  const hasSens = /灵敏度|敏感性|鲁棒性|扰动|稳健性|变动率|变化率/.test(text);
-  const hasValidation = /(?:验证|检验|测试|校验).*(?:模型|结果)/.test(text.substring(Math.max(0,text.length-5000)));
-  scores.D1 = hasSens ? 0.60 : (hasValidation ? 0.40 : 0.15);
-  if(scores.D1 < 0.50) feedback.D1 = '缺少灵敏度分析/模型验证（阻挠省奖→国奖的第一障碍）';
+  var hs=/灵敏度|敏感性|鲁棒性|扰动|稳健性|变动率|变化率/.test(text);
+  var hv=/(?:验证|检验|测试|校验).*(?:模型|结果)/.test(text.substring(Math.max(0,text.length-5000)));
+  scores.D1=hs?0.60:(hv?0.40:0.15);
+  if(scores.D1<0.50) fb.D1='缺少灵敏度分析/模型验证（阻挠省奖→国奖的第一障碍）';
 
-  const statCount = (text.match(/p值|p\s*[<≤]|t检验|F检验|F值|AIC|BIC|显著性|置信区间|R[²2]|残差/g)||[]).length;
-  scores.D2 = Math.min(0.40, +(0.28+0.12*Math.min(statCount/6,1)).toFixed(2));
-  scores.D3 = Math.min(0.40, +(0.25+0.15*Math.min((text.match(/相比|对比|优于|不如|提升|下降|改进|传统方法|基准/g)||[]).length/4,1)).toFixed(2));
+  var sc=(text.match(/p值|p\s*[<≤]|t检验|F检验|AIC|BIC|显著性|置信区间|R[²2]|残差/g)||[]).length;
+  scores.D2=Math.min(0.40,0.28+0.12*Math.min(sc/6,1));
+  scores.D3=Math.min(0.40,0.25+0.15*Math.min((text.match(/相比|对比|优于|不如|提升|改进|传统方法|基准/g)||[]).length/4,1));
+  var es=extract(text,['模型评价','模型的评价','模型的分析与评价','优缺点分析','六、模型的'],['参考文献','附录','七、']);
+  scores.D4=0.30+0.05*(/优点|优势|长处/.test(es))+0.05*(/缺点|不足|局限/.test(es))+0.04*(/推广|改进|展望/.test(es));
 
-  const evalSec = extractSection(text, ['模型评价','模型的评价','模型的分析与评价','优缺点分析','六、模型的'], ['参考文献','附录','七、']);
-  scores.D4 = +(0.30+0.05*(/优点|优势|长处/.test(evalSec))+0.05*(/缺点|不足|局限|缺陷/.test(evalSec))+0.04*(/推广|改进|展望/.test(evalSec))).toFixed(2);
+  var fg=(text.match(/图\s*\d+|如图|Fig/g)||[]).length;
+  var fa=(text.match(/图\s*\d+\s*(?:显示|表明|展示|反映|说明|可以|从中)/g)||[]).length;
+  scores.E1=Math.min(0.50,0.35+0.15*Math.min(fa/Math.max(1,fg),1));
+  if(scores.E1<0.40) fb.E1=fg+'处图表引用但仅'+fa+'处有解析';
 
-  // ---- E. 规范 ----
-  const figs = (text.match(/图\s*\d+|如图|Fig/g)||[]).length;
-  const figAna = (text.match(/图\s*\d+\s*(?:显示|表明|展示|反映|说明|可以|从中)/g)||[]).length;
-  scores.E1 = Math.min(0.50, +(0.35+0.15*Math.min(figAna/Math.max(1,figs),1)).toFixed(2));
-  if(scores.E1 < 0.40) feedback.E1 = `${figs}处图表引用但仅${figAna}处有解析`;
+  scores.E2=Math.max(0.25,0.30+0.10*((text.match(/我们|我[^国们]|本组/g)||[]).length/Math.max(1,text.length)*10000<2));
+  var rs=new Set(text.match(/\[\d+\]/g)||[]).size;
+  var er=(text.substring(Math.max(0,text.length-5000)).match(/[A-Z][a-z]{3,}.*\d{4}/g)||[]).length;
+  scores.E3=Math.min(0.30,0.22+0.08*Math.min(rs/10,1)*0.6+0.08*Math.min(er/3,1)*0.4);
+  scores.E4=/\(\d+[-\d]*\)\s*$/.test(text)?0.30:0.22;
 
-  const weRatio = (text.match(/我们|我[^国们]|本组/g)||[]).length/Math.max(1,text.length)*10000;
-  scores.E2 = Math.max(0.25, +(0.30+0.10*(weRatio<2)).toFixed(2));
-  const refs = new Set(text.match(/\[\d+\]/g)||[]).size;
-  const engRefs = (text.substring(Math.max(0,text.length-5000)).match(/[A-Z][a-z]{3,}.*\d{4}/g)||[]).length;
-  scores.E3 = Math.min(0.30, +(0.22+0.08*Math.min(refs/10,1)*0.6+0.08*Math.min(engRefs/3,1)*0.4).toFixed(2));
-  scores.E4 = /\(\d+[-\d]*\)\s*$/.test(text) ? 0.30 : 0.22;
+  var mv={A1:0.45,A2:0.38,A3:0.22,A4:0.22,A5:0.22,B1:0.40,B2:0.60,B3:0.50,B4:0.50,B5:0.50,C1:0.60,C2:0.40,C3:0.60,C4:0.50,C5:0.40,D1:0.80,D2:0.40,D3:0.40,D4:0.40,E1:0.50,E2:0.40,E3:0.30,E4:0.30};
+  var mp={'假设':['B1','B2','B3','B4','B5'],'建模':['C1','C2','C3','C4','C5'],'结果':['D1','D2','D3','D4'],'表述':['A1','A2','A3','A4','A5','E1','E2','E3','E4']};
+  var dims={},dl={'假设':'假设的合理性','建模':'建模的创造性','结果':'结果的正确性','表述':'文字表述的清晰性'};
+  for(var d in mp){var g=0,m=0;mp[d].forEach(function(k){g+=scores[k]||0;m+=mv[k]||0;});dims[d]=m>0?+(g/m*10).toFixed(1):0;}
+  var total=+(0.20*dims['假设']+0.35*dims['建模']+0.30*dims['结果']+0.15*dims['表述']).toFixed(2);
+  var t23=+Object.values(scores).reduce(function(a,b){return a+b;},0).toFixed(2);
+  var award=total>=9?'稳国一':total>=8?'国一竞争力':total>=7?'国二':total>=6?'省一':total>=5?'省二~省三':'需大幅改进';
 
-  // ---- Compute dimensions ----
-  const mapping = {
-    '假设': ['B1','B2','B3','B4','B5'],
-    '建模': ['C1','C2','C3','C4','C5'],
-    '结果': ['D1','D2','D3','D4'],
-    '表述': ['A1','A2','A3','A4','A5','E1','E2','E3','E4'],
-  };
-  const maxVals = {A1:0.45,A2:0.38,A3:0.22,A4:0.22,A5:0.22,B1:0.40,B2:0.60,B3:0.50,B4:0.50,B5:0.50,C1:0.60,C2:0.40,C3:0.60,C4:0.50,C5:0.40,D1:0.80,D2:0.40,D3:0.40,D4:0.40,E1:0.50,E2:0.40,E3:0.30,E4:0.30};
-  const dims = {};
-  for(const [dim, keys] of Object.entries(mapping)) {
-    let got=0, max=0;
-    keys.forEach(k => { got += scores[k]||0; max += maxVals[k]||0; });
-    dims[dim] = max>0 ? +(got/max*10).toFixed(1) : 0;
-  }
-  const total = +(0.20*dims['假设']+0.35*dims['建模']+0.30*dims['结果']+0.15*dims['表述']).toFixed(2);
-  const total23 = +Object.values(scores).reduce((a,b)=>a+b,0).toFixed(2);
-
-  let award;
-  if(total>=9.0) award='稳国一';
-  else if(total>=8.0) award='国一竞争力';
-  else if(total>=7.0) award='国二';
-  else if(total>=6.0) award='省一';
-  else if(total>=5.0) award='省二~省三';
-  else award='需大幅改进';
-
-  const foundSections = required.filter(s => text.includes(s));
-  const missingSections = required.filter(s => !text.includes(s));
-
-  return { filename, pages, chars: text.length, total, total23, award, dims, scores, feedback, foundSections, missingSections, maxVals, dimLabel: {'假设':'假设的合理性','建模':'建模的创造性','结果':'结果的正确性','表述':'文字表述的清晰性'} };
+  return {fname:fname,pages:pages,chars:text.length,total:total,t23:t23,award:award,dims:dims,dl:dl,scores:scores,fb:fb,found:fnd,missing:mis,mv:mv};
 }
 
-function extractSection(text, starts, ends) {
-  for(const s of starts) {
-    const idx = text.indexOf(s);
+function extract(text,starts,ends){
+  for(var i=0;i<starts.length;i++){
+    var idx=text.indexOf(starts[i]);
     if(idx===-1) continue;
-    let end = idx+3000;
-    for(const e of ends) {
-      const ei = text.indexOf(e, idx+s.length);
-      if(ei!==-1 && ei<end) end = ei;
+    var end=idx+3000;
+    for(var j=0;j<ends.length;j++){
+      var ei=text.indexOf(ends[j],idx+starts[i].length);
+      if(ei!==-1&&ei<end) end=ei;
     }
-    return text.substring(idx, Math.min(end, text.length));
+    return text.substring(idx,Math.min(end,text.length));
   }
   return '';
 }
 
-// ==================== RENDER ====================
-function renderResults(r) {
-  const dimColors = {'假设':'#3182ce','建模':'#805ad5','结果':'#38a169','表述':'#dd6b20'};
-  const awardColors = {'稳国一':'#2f5496','国一竞争力':'#3b82f6','国二':'#38a169','省一':'#d69e2e','省二~省三':'#ed8936','需大幅改进':'#e53e3e'};
-  const itemNames = {A1:'问题→方法→结果链条',A2:'数值结果密度',A3:'改写原创度',A4:'创新点标识',A5:'篇幅控制',B1:'11模块完整性',B2:'问题分析预演深度',B3:'过渡与衔接',B4:'假设论证质量',B5:'层次递进感',C1:'公式-文字交替率',C2:'符号规范',C3:'模型选择依据',C4:'数据预处理叙事',C5:'模型命名辨识度',D1:'模型验证/灵敏度',D2:'统计检验完整性',D3:'多方法对比',D4:'模型评价平衡性',E1:'图表解析段落',E2:'语言规范性',E3:'参考文献规范',E4:'排版美观度'};
-  const dimOrder = [['A.摘要',['A1','A2','A3','A4','A5']],['B.逻辑',['B1','B2','B3','B4','B5']],['C.叙事',['C1','C2','C3','C4','C5']],['D.可信度',['D1','D2','D3','D4']],['E.规范',['E1','E2','E3','E4']]];
-  const aColor = awardColors[r.award]||'#718096';
+// ====== STEP 5: Render results ======
+function render(r){
+  var awc={'稳国一':'#2f5496','国一竞争力':'#3b82f6','国二':'#38a169','省一':'#d69e2e','省二~省三':'#ed8936','需大幅改进':'#e53e3e'};
+  var dc={'假设':'#3182ce','建模':'#805ad5','结果':'#38a169','表述':'#dd6b20'};
+  var nm={A1:'问题→方法→结果链条',A2:'数值结果密度',A3:'改写原创度',A4:'创新点标识',A5:'篇幅控制',B1:'11模块完整性',B2:'问题分析预演深度',B3:'过渡与衔接',B4:'假设论证质量',B5:'层次递进感',C1:'公式-文字交替率',C2:'符号规范',C3:'模型选择依据',C4:'数据预处理叙事',C5:'模型命名辨识度',D1:'模型验证/灵敏度',D2:'统计检验完整性',D3:'多方法对比',D4:'模型评价平衡性',E1:'图表解析段落',E2:'语言规范性',E3:'参考文献规范',E4:'排版美观度'};
+  var od=[['A.摘要',['A1','A2','A3','A4','A5']],['B.逻辑',['B1','B2','B3','B4','B5']],['C.叙事',['C1','C2','C3','C4','C5']],['D.可信度',['D1','D2','D3','D4']],['E.规范',['E1','E2','E3','E4']]];
+  var ac=awc[r.award]||'#718096';
 
-  let html = `<div class="card"><div class="hero">`;
-  html += `<div class="circle" style="background:${aColor}"><span class="big">${r.total}</span><span class="sub">/10分</span></div>`;
-  html += `<div class="meta"><h2>${r.filename} <span class="award" style="background:${aColor}">${r.award}</span></h2>`;
-  html += `<p class="info">${r.pages}页 · ${r.chars.toLocaleString()}字符 · 23项总分${r.total23}/10.00</p>`;
-  html += `<p style="margin-top:6px">`;
-  r.foundSections.forEach(s => { html += `<span class="tag tag-ok">${s}</span>`; });
-  r.missingSections.forEach(s => { html += `<span class="tag tag-no">缺:${s}</span>`; });
-  html += `</p></div></div>`;
+  var h='<div class="card"><div class="hero">';
+  h+='<div class="circle" style="background:'+ac+'"><span class="big">'+r.total+'</span><span class="sub">/10分</span></div>';
+  h+='<div class="meta"><h2>'+r.fname+' <span class="award" style="background:'+ac+'">'+r.award+'</span></h2>';
+  h+='<p class="info">'+r.pages+'页 · '+r.chars.toLocaleString()+'字符 · 23项总分'+r.t23+'/10.00</p><p style="margin-top:4px">';
+  r.found.forEach(function(s){h+='<span class="tag tag-ok">'+s+'</span> ';});
+  r.missing.forEach(function(s){h+='<span class="tag tag-no">缺:'+s+'</span> ';});
+  h+='</p></div></div>';
 
-  html += `<div class="bars">`;
-  for(const [dim,score] of Object.entries(r.dims)) {
-    const pct = (score/10*100).toFixed(0);
-    html += `<div class="bar-item"><span class="lbl">${r.dimLabel[dim].split('的')[0]}</span><div class="bg"><div class="fill" style="width:${pct}%;background:${dimColors[dim]}"></div></div><span class="v">${score}</span></div>`;
-  }
-  html += `</div></div>`;
+  h+='<div class="bars">';
+  for(var d in r.dims){var pct=(r.dims[d]/10*100).toFixed(0);h+='<div class="bar-item"><span style="width:55px;text-align:right">'+r.dl[d].split('的')[0]+'</span><div class="bg"><div class="fill" style="width:'+pct+'%;background:'+dc[d]+'"></div></div><span class="v">'+r.dims[d]+'</span></div>';}
+  h+='</div></div>';
 
-  if(Object.keys(r.feedback).length > 0) {
-    html += `<div class="card"><div class="section-title">优先修改项</div>`;
-    Object.entries(r.feedback).slice(0,5).forEach(([k,v]) => { html += `<div class="fb"><strong>${k}:</strong> ${v}</div>`; });
-    html += `</div>`;
+  var fkeys=Object.keys(r.fb);
+  if(fkeys.length>0){
+    h+='<div class="card"><b style="color:#e53e3e">⚡ 优先修改项</b>';
+    fkeys.slice(0,5).forEach(function(k){h+='<div class="fb"><b>'+k+':</b> '+r.fb[k]+'</div>';});
+    h+='</div>';
   }
 
-  html += `<div class="card"><div class="section-title">23项细化评分</div>`;
-  dimOrder.forEach(([dimName, keys]) => {
-    html += `<h4 style="margin:8px 0 4px;color:#4a5568;font-size:.88em">${dimName}</h4>`;
-    html += `<table><thead><tr><th>#</th><th>评分项</th><th>得分</th><th>满分</th><th>达成率</th></tr></thead><tbody>`;
-    keys.forEach(k => {
-      const sc = r.scores[k]||0, mx = r.maxVals[k], rate = (sc/mx*100).toFixed(0);
-      const gClass = rate>=90?'rate-A':rate>=70?'rate-B':rate>=50?'rate-C':'rate-D';
-      html += `<tr><td>${k}</td><td>${itemNames[k]}</td><td>${sc.toFixed(2)}</td><td>${mx.toFixed(2)}</td><td class="${gClass}">${rate}%</td></tr>`;
-    });
-    html += `</tbody></table>`;
-  });
-  html += `</div>`;
+  h+='<div class="card"><b>23项细化评分</b>';
+  od.forEach(function(d){var dn=d[0],ks=d[1];
+    h+='<h4 style="margin:12px 0 4px;color:#4a5568">'+dn+'</h4><table><tr><th>#</th><th>评分项</th><th>得分</th><th>满分</th><th>达成率</th></tr>';
+    ks.forEach(function(k){var sc=r.scores[k]||0,mx=r.mv[k],rate=(sc/mx*100).toFixed(0),gc=rate>=90?'rate-A':rate>=70?'rate-B':rate>=50?'rate-C':'rate-D';
+      h+='<tr><td>'+k+'</td><td>'+nm[k]+'</td><td>'+sc.toFixed(2)+'</td><td>'+mx.toFixed(2)+'</td><td class="'+gc+'">'+rate+'%</td></tr>';});
+    h+='</table>';});
+  h+='</div>';
 
-  html += `<div style="text-align:center;padding:12px"><button class="btn" style="background:#718096" onclick="location.reload()">重新上传</button></div>`;
-  document.getElementById('results').innerHTML = html;
-  document.getElementById('results').style.display = 'block';
+  h+='<div style="text-align:center;padding:12px"><button class="btn" style="background:#718096" onclick="location.reload()">重新上传</button></div>';
+  document.getElementById('results').innerHTML=h;
+  document.getElementById('results').style.display='block';
 }
 </script>
 </body>
