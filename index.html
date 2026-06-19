@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>数学建模论文预评分系统 v2.0</title>
+<title>数学建模论文预评分系统 v2.1</title>
 <style>
 :root {
   --primary: #1a365d; --primary-light: #2f5496; --accent: #e53e3e;
@@ -15,191 +15,241 @@
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: -apple-system,"Microsoft YaHei","PingFang SC",sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-
-/* ========== HEADER ========== */
-.header { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:#fff; padding:18px 0; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.1); }
-.header h1 { font-size:1.35em; font-weight:700; letter-spacing:1px; }
-.header .sub { opacity:.8; font-size:.78em; margin-top:2px; }
-.header .ver { display:inline-block; background:rgba(255,255,255,.2); padding:2px 10px; border-radius:10px; font-size:.7em; margin-left:8px; }
-
-/* ========== CONTAINER ========== */
-.container { max-width:1100px; margin:0 auto; padding:18px 16px; }
-.card { background:var(--card); border-radius:10px; padding:22px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
-
-/* ========== MODAL ========== */
+.header { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:#fff; padding:16px 0; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+.header h1 { font-size:1.3em; font-weight:700; }
+.header .ver { display:inline-block; background:rgba(255,255,255,.2); padding:2px 8px; border-radius:10px; font-size:.65em; margin-left:6px; }
+.header .sub { opacity:.8; font-size:.75em; margin-top:2px; }
+.container { max-width:1100px; margin:0 auto; padding:16px; }
+.card { background:var(--card); border-radius:10px; padding:20px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
 .modal-overlay { position:fixed; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:1000;display:none;align-items:center;justify-content:center; }
-.modal { background:#fff; border-radius:12px; padding:28px 30px; max-width:600px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,.25); position:relative; }
-.modal h2 { font-size:1.2em; color:var(--primary); margin-bottom:16px; text-align:center; }
-.modal .steps { counter-reset:step; }
-.modal .step { display:flex; gap:12px;margin-bottom:14px;align-items:flex-start; }
-.modal .step-num { width:28px;height:28px;background:var(--primary-light);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8em;font-weight:700;flex-shrink:0; }
-.modal .step-text { font-size:.88em;line-height:1.6;flex:1; }
-.modal .step-text code { background:#f0f4f8;padding:2px 6px;border-radius:3px;font-size:.85em; }
-.modal .note { background:#fff3cd;padding:12px;border-radius:6px;font-size:.82em;margin-top:12px;color:#856404; }
-.modal .close-btn { display:block;margin:16px auto 0;padding:10px 36px;background:var(--primary-light);color:#fff;border:none;border-radius:6px;font-size:.95em;cursor:pointer;font-weight:600; }
-.modal .dont-show { display:block;text-align:center;margin-top:8px;font-size:.78em;color:var(--muted);cursor:pointer; }
+.modal { background:#fff; border-radius:12px; padding:26px 28px; max-width:580px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,.25); }
+.modal h2 { font-size:1.15em; color:var(--primary); margin-bottom:14px; text-align:center; }
+.modal .step { display:flex; gap:10px;margin-bottom:12px;align-items:flex-start; }
+.modal .step-num { width:26px;height:26px;background:var(--primary-light);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75em;font-weight:700;flex-shrink:0; }
+.modal .step-text { font-size:.85em;line-height:1.6;flex:1; }
+.modal .note { background:#fff3cd;padding:10px;border-radius:6px;font-size:.8em;margin-top:10px;color:#856404; }
+.modal .close-btn { display:block;margin:14px auto 0;padding:10px 32px;background:var(--primary-light);color:#fff;border:none;border-radius:6px;font-size:.9em;cursor:pointer;font-weight:600; }
+.modal .dont-show { display:block;text-align:center;margin-top:8px;font-size:.75em;color:var(--muted);cursor:pointer; }
 
-/* ========== UPLOAD ZONE ========== */
-.upload-zone { border:2px dashed #cbd5e0; border-radius:10px; padding:42px 20px; text-align:center; cursor:pointer; transition:all .25s; }
+.upload-zone { border:2px dashed #cbd5e0; border-radius:10px; padding:38px 20px; text-align:center; cursor:pointer; transition:all .25s; }
 .upload-zone:hover,.dragover { border-color:var(--primary-light); background:#eff6ff; }
-.upload-zone .icon { font-size:2.8em;margin-bottom:6px; }
-.upload-zone .btn { display:inline-block;margin:10px 4px;padding:10px 24px;background:var(--primary-light);color:#fff;border:none;border-radius:6px;font-size:.9em;cursor:pointer;font-weight:600; }
-.upload-zone .btn:hover { background:#1e40af; }
-.upload-zone .btn-outline { background:#fff; color:var(--primary-light); border:1px solid var(--primary-light); }
-.upload-zone .btn-outline:hover { background:#eff6ff; }
-#msg { margin-top:10px;font-size:.82em;color:var(--muted);min-height:20px; }
+.upload-zone .icon { font-size:2.6em;margin-bottom:4px; }
+.btn { display:inline-block;margin:10px 4px;padding:10px 22px;background:var(--primary-light);color:#fff;border:none;border-radius:6px;font-size:.88em;cursor:pointer;font-weight:600; }
+.btn:hover { background:#1e40af; }
+.btn-outline { background:#fff; color:var(--primary-light); border:1px solid var(--primary-light); }
+.btn-outline:hover { background:#eff6ff; }
+#msg { margin-top:8px;font-size:.8em;color:var(--muted);min-height:20px; }
 
-/* ========== LOADING & RESULTS ========== */
-#loading { display:none;text-align:center;padding:30px; }
-.spinner { width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:var(--primary-light);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px; }
+#loading { display:none;text-align:center;padding:28px; }
+.spinner { width:34px;height:34px;border:3px solid #e2e8f0;border-top-color:var(--primary-light);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px; }
 @keyframes spin { to{transform:rotate(360deg);} }
 #results { display:none; }
 .hero { display:flex;align-items:center;gap:20px;flex-wrap:wrap; }
-.circle { width:100px;height:100px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0; }
-.circle .big { font-size:2em;line-height:1; }
-.circle .sub { font-size:.68em;opacity:.9; }
-.meta h2 { font-size:1.05em;margin-bottom:4px;word-break:break-all; }
-.meta .info { font-size:.8em;color:var(--muted); }
-.award { display:inline-block;padding:4px 14px;border-radius:15px;font-weight:700;font-size:.82em;color:#fff; }
-.bars { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px; }
-.bar-item { display:flex;align-items:center;gap:6px;font-size:.8em; }
-.bar-item .bg { flex:1;height:15px;background:var(--border);border-radius:8px;overflow:hidden; }
-.bar-item .fill { height:100%;border-radius:8px;transition:width .7s; }
-.bar-item .v { width:28px;text-align:right;font-weight:600; }
-.tag { display:inline-block;padding:2px 6px;border-radius:3px;font-size:.68em;margin:2px; }
+.circle { width:96px;height:96px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0; }
+.circle .big { font-size:1.9em;line-height:1; }
+.circle .sub { font-size:.65em;opacity:.9; }
+.meta h2 { font-size:1em;margin-bottom:3px;word-break:break-all; }
+.meta .info { font-size:.78em;color:var(--muted); }
+.award { display:inline-block;padding:4px 12px;border-radius:15px;font-weight:700;font-size:.8em;color:#fff; }
+.bars { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:10px; }
+.bar-item { display:flex;align-items:center;gap:5px;font-size:.78em; }
+.bar-item .bg { flex:1;height:14px;background:var(--border);border-radius:7px;overflow:hidden; }
+.bar-item .fill { height:100%;border-radius:7px;transition:width .7s; }
+.tag { display:inline-block;padding:2px 6px;border-radius:3px;font-size:.66em;margin:2px; }
 .tag-ok { background:#c6f6d5;color:#276749; }
 .tag-no { background:#fed7d7;color:#c53030; }
-.fb { background:#fff5f5;border-left:3px solid var(--accent);padding:10px 14px;margin:6px 0;border-radius:0 6px 6px 0;font-size:.83em; }
-table { width:100%;border-collapse:collapse;font-size:.76em; }
-th,td { padding:5px 8px;text-align:left;border-bottom:1px solid var(--border); }
+.fb { background:#fff5f5;border-left:3px solid var(--accent);padding:9px 12px;margin:5px 0;border-radius:0 6px 6px 0;font-size:.82em; }
+.ai-tag { display:inline-block;background:#e8f4fd;color:#2f5496;font-size:.65em;padding:1px 5px;border-radius:3px;margin-left:3px; }
+table { width:100%;border-collapse:collapse;font-size:.74em; }
+th,td { padding:5px 7px;text-align:left;border-bottom:1px solid var(--border); }
 th { background:#f7fafc;font-weight:600;color:#4a5568; }
 .rate-A{color:var(--green);font-weight:700}.rate-B{color:var(--blue);font-weight:700}.rate-C{color:var(--yellow);font-weight:700}.rate-D{color:var(--red);font-weight:700}
-.footer { text-align:center;padding:14px;font-size:.72em;color:#a0aec0;border-top:1px solid var(--border);margin-top:20px; }
-.footer a { color:var(--muted); }
+.footer { text-align:center;padding:12px;font-size:.7em;color:#a0aec0;border-top:1px solid var(--border);margin-top:16px; }
 </style>
 </head>
 <body>
 
-<!-- ========== WELCOME MODAL ========== -->
+<!-- WELCOME MODAL -->
 <div class="modal-overlay" id="welcome-modal">
 <div class="modal">
-  <h2>📋 数学建模论文预评分系统</h2>
-  <div class="steps">
-    <div class="step"><span class="step-num">1</span><span class="step-text"><b>上传论文</b><br>拖拽PDF到虚线框内，或点击「选择文件」按钮。系统使用 PDF.js 引擎在浏览器本地提取文本，<b>不会上传任何数据</b>。</span></div>
-    <div class="step"><span class="step-num">2</span><span class="step-text"><b>自动评分</b><br>系统按照<b>给分制</b>标准，从整体印象出发，用四大标准（假设合理性、建模创造性、结果正确性、表述清晰性）校准，输出 23 项细化评分。</span></div>
-    <div class="step"><span class="step-num">3</span><span class="step-text"><b>查看报告</b><br>获得总分/10、预测奖项区间、四维雷达、优先修改建议和 23 项明细表。论文<b>不离开你的浏览器</b>，安全放心。</span></div>
-  </div>
+  <h2>数学建模论文预评分系统</h2>
+  <div class="step"><span class="step-num">1</span><span class="step-text"><b>上传论文</b><br>拖拽PDF到虚线框内或点击选择文件。使用 PDF.js 在浏览器本地提取文本，<b>数据不上传</b>。</span></div>
+  <div class="step"><span class="step-num">2</span><span class="step-text"><b>智能评分</b><br>规则引擎 + <b>AI语义检测</b>（本地运行，零费用）。从整体印象出发，四大标准校准，23项细化评分。</span></div>
+  <div class="step"><span class="step-num">3</span><span class="step-text"><b>查看报告</b><br>获得总分/10、奖项区间、修改建议和23项明细。首次访问需下载AI模型（~25MB，仅一次）。</span></div>
   <div class="note">
-    <b>⚠ 注意事项</b><br>
-    · 仅支持<b>文本版</b> PDF（Word/LaTeX 导出的）。扫描图像版需先 OCR 处理。<br>
-    · 本系统为<b>预筛辅助工具</b>，评分仅供参考，不代表官方评审结果。<br>
+    <b>注意事项</b><br>
+    · 仅支持<b>文本版</b> PDF（Word/LaTeX导出），扫描版需先OCR。<br>
+    · AI模型首次加载需10-30秒（取决于网速），之后由浏览器缓存。<br>
+    · 本系统为预筛辅助工具，不代表官方评审结果。
   </div>
   <button class="close-btn" onclick="closeModal()">开始使用</button>
-  <span class="dont-show" onclick="dontShowAgain()">不再显示此提示</span>
+  <span class="dont-show" onclick="dontShowAgain()">不再显示</span>
 </div>
 </div>
 
-<!-- ========== HEADER ========== -->
 <div class="header">
-  <h1>数学建模论文预评分系统 <span class="ver">v2.0</span></h1>
-  <p class="sub">上传PDF → 提取文本 → 给分制评分 → 修改建议</p>
+  <h1>数学建模论文预评分系统 <span class="ver">v2.1</span></h1>
+  <p class="sub">上传PDF → 提取文本 → AI智能评分 → 修改建议</p>
 </div>
 
-<!-- ========== MAIN ========== -->
 <div class="container">
-
   <div class="card" id="upload-card">
     <div class="upload-zone" id="drop-zone">
       <div class="icon">📄</div>
       <p><b>拖拽学生论文 PDF 到此处</b></p>
-      <p style="font-size:.8em;color:var(--muted);margin:4px 0">或使用下方按钮</p>
+      <p style="font-size:.8em;color:var(--muted);margin:3px 0">或使用下方按钮</p>
       <button class="btn" id="pick-btn">📁 选择 PDF 文件</button>
       <button class="btn btn-outline" id="demo-btn">🧪 使用帮助</button>
       <input type="file" id="file-input" accept=".pdf" style="display:none">
-      <p id="msg"><span style="color:var(--green)">✓ 页面就绪</span> · 正在加载PDF引擎...</p>
+      <p id="msg"><span style="color:var(--green)">✓ 页面就绪</span> · 正在加载AI模型 (<span id="model-status">等待中...</span>)</p>
     </div>
   </div>
-
   <div class="card" id="loading"><div class="spinner"></div><p>正在分析论文...</p><p style="font-size:.8em;color:var(--muted)" id="prog"></p></div>
-
   <div id="results"></div>
 </div>
 
 <div class="footer">
-  数学建模论文预评分系统 v2.0 · 纯浏览器本地运行 · 数据不上传<br>
-  <a href="https://github.com/MrZhangStatisticia/shumo-scorer" target="_blank">GitHub</a>
+  数学建模论文预评分系统 v2.1 · 规则引擎 + 本地AI语义检测 · 纯浏览器运行 · 零费用
 </div>
 
-<!-- ========== SCRIPTS ========== -->
-<script>
-// ===== Welcome modal =====
+<!-- Transformers.js -->
+<script type="module">
+import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js';
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+
+// ===== AI MODEL STATE =====
+let aiReady = false;
+let embedder = null;
+let classifier = null;
+
+const modelStatus = document.getElementById('model-status');
+
+// Try to load embedding model for semantic analysis
+async function loadModels() {
+  modelStatus.textContent = '下载中...';
+  modelStatus.style.color = 'var(--yellow)';
+  try {
+    // Load a small multilingual embedding model (~25MB quantized)
+    embedder = await pipeline('feature-extraction', 'Xenova/bge-small-zh-v1.5', {
+      quantized: true,
+      progress_callback: (p) => {
+        if(p.status === 'progress') modelStatus.textContent = '下载中 '+Math.round(p.progress)+'%';
+      }
+    });
+    modelStatus.textContent = '就绪';
+    modelStatus.style.color = 'var(--green)';
+    aiReady = true;
+  } catch(e) {
+    console.log('AI model load failed:', e.message);
+    modelStatus.textContent = '未加载（使用规则引擎）';
+    modelStatus.style.color = 'var(--muted)';
+  }
+}
+loadModels();
+
+// ===== SEMANTIC CHECKS (run when model loaded) =====
+async function semanticCheck(text, checkType) {
+  if(!aiReady || !embedder) return null;
+
+  const prompts = {
+    causal_reasoning: {
+      positive: '因为数据具有这个特征，考虑到这个约束条件，因此我们选择这个方法进行建模。',
+      negative: '首先计算平均值，然后画图，最后进行回归分析。接下来做聚类。',
+    },
+    original_rewrite: {
+      positive: '蔬菜作为日常消费品，其市场需求受季节和节假日影响明显，合理的定价策略对商超经营至关重要。',
+      negative: '根据附件1和附件2的数据，需要分析蔬菜各品类及单品销售量的分布规律。',
+    },
+    balanced_evaluation: {
+      positive: '本文模型有以下优点：贴合实际、算法高效。同时存在局限性：假设理想化、未考虑边际效应。未来可引入动态因素优化。',
+      negative: '模型效果很好，结果准确。该模型非常优秀，可以推广。',
+    },
+    innovation_expression: {
+      positive: '本文构建了ARIMA-多元回归-非线性规划的三层递进模型体系，创新性地从商品成本和市场供需双维度构建成本加成定价指标。',
+      negative: '本文使用了K-S检验、斯皮尔曼检验、多元回归、非线性规划和层次分析法。',
+    }
+  };
+
+  const config = prompts[checkType];
+  if(!config) return null;
+
+  try {
+    // Get embeddings
+    const textEmb = await embedder(text.substring(0, 200), { pooling: 'mean', normalize: true });
+    const posEmb = await embedder(config.positive, { pooling: 'mean', normalize: true });
+    const negEmb = await embedder(config.negative, { pooling: 'mean', normalize: true });
+
+    // Cosine similarity
+    const cosSim = (a, b) => {
+      let sum = 0; for(let i=0; i<a.length; i++) sum += a.data[i]*b.data[i]; return sum;
+    };
+    const posScore = cosSim(textEmb, posEmb);
+    const negScore = cosSim(textEmb, negEmb);
+
+    return { score: +(posScore - negScore).toFixed(3), posScore: +posScore.toFixed(3), negScore: +negScore.toFixed(3) };
+  } catch(e) {
+    return null;
+  }
+}
+
+// ===== EXPORT for non-module script =====
+window.semanticCheck = semanticCheck;
+window.isAIReady = function(){ return aiReady; };
+
+// ===== Modal =====
 (function showWelcome(){
   var modal = document.getElementById('welcome-modal');
   if(!modal){ setTimeout(showWelcome, 100); return; }
-  if(!localStorage.getItem('shumo-hide-welcome-v2')){
-    modal.style.display = 'flex';
-  }
+  if(!localStorage.getItem('shumo-hide-welcome-v2')){ modal.style.display = 'flex'; }
 })();
-function closeModal(){ document.getElementById('welcome-modal').style.display='none'; }
-function dontShowAgain(){ localStorage.setItem('shumo-hide-welcome-v2','1'); closeModal(); }
+window.closeModal = function(){ document.getElementById('welcome-modal').style.display='none'; };
+window.dontShowAgain = function(){ localStorage.setItem('shumo-hide-welcome-v2','1'); closeModal(); };
 
 // ===== Event handlers =====
 (function(){
-  var btn=document.getElementById('pick-btn');
-  var dbn=document.getElementById('demo-btn');
-  var inp=document.getElementById('file-input');
-  var msg=document.getElementById('msg');
-  var dz=document.getElementById('drop-zone');
-
+  var btn=document.getElementById('pick-btn'), dbn=document.getElementById('demo-btn'), inp=document.getElementById('file-input'), msg=document.getElementById('msg'), dz=document.getElementById('drop-zone');
   btn.onclick=function(){ inp.click(); };
   dbn.onclick=function(){ document.getElementById('welcome-modal').style.display='flex'; };
-
-  inp.onchange=function(e){
-    if(e.target.files.length>0){
-      msg.innerHTML='<span style="color:var(--green)">已选择: '+e.target.files[0].name+' ('+(e.target.files[0].size/1024).toFixed(0)+'KB)，处理中...</span>';
-      handleFile(e.target.files[0]);
-    }
-  };
+  inp.onchange=function(e){ if(e.target.files.length>0){ msg.innerHTML='<span style="color:var(--green)">已选择: '+e.target.files[0].name+' ('+(e.target.files[0].size/1024).toFixed(0)+'KB)，处理中...</span>'; handleFile(e.target.files[0]); }};
   dz.ondragover=function(e){e.preventDefault();dz.classList.add('dragover');};
   dz.ondragleave=function(e){e.preventDefault();dz.classList.remove('dragover');};
-  dz.ondrop=function(e){
-    e.preventDefault();dz.classList.remove('dragover');
-    if(e.dataTransfer.files.length>0){
-      msg.innerHTML='<span style="color:var(--green)">已拖入: '+e.dataTransfer.files[0].name+'，处理中...</span>';
-      handleFile(e.dataTransfer.files[0]);
-    }
-  };
+  dz.ondrop=function(e){e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files.length>0){msg.innerHTML='<span style="color:var(--green)">已拖入: '+e.dataTransfer.files[0].name+'，处理中...</span>';handleFile(e.dataTransfer.files[0]);}};
 })();
 
 // ===== PDF.js loader =====
 (function checkLib(){
-  if(typeof pdfjsLib!=='undefined'){ document.getElementById('msg').innerHTML='<span style="color:var(--green)">✓ PDF引擎就绪</span> · 拖拽或点击上传即可';return; }
+  if(typeof pdfjsLib!=='undefined'){ return; }
   setTimeout(function(){
-    if(typeof pdfjsLib!=='undefined'){ document.getElementById('msg').innerHTML='<span style="color:var(--green)">✓ PDF引擎就绪</span> · 拖拽或点击上传即可';return; }
-    document.getElementById('msg').innerHTML='<span style="color:var(--yellow)">PDF引擎加载较慢，请稍候...</span>';
+    if(typeof pdfjsLib!=='undefined'){ return; }
     var s=document.createElement('script');
     s.src='https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js';
-    s.onload=function(){ document.getElementById('msg').innerHTML='<span style="color:var(--green)">✓ PDF引擎就绪</span> · 拖拽或点击上传即可'; };
-    s.onerror=function(){ document.getElementById('msg').innerHTML='<span style="color:var(--red)">PDF引擎加载失败，请刷新页面或检查网络</span>'; };
+    s.onerror=function(){ document.getElementById('msg').innerHTML='<span style="color:var(--red)">PDF引擎加载失败，请刷新或检查网络</span>'; };
     document.head.appendChild(s);
   },3000);
 })();
+</script>
 
-// ===== File processing =====
+<!-- PDF.js -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+
+<!-- Main processing script -->
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
 function handleFile(file){
   if(!file.name.toLowerCase().endsWith('.pdf')){ document.getElementById('msg').innerHTML='<span style="color:var(--red)">请上传PDF格式文件</span>';return; }
-  if(typeof pdfjsLib==='undefined'){ document.getElementById('msg').innerHTML='<span style="color:var(--red)">PDF引擎未就绪，请稍后重试</span>';return; }
+  if(typeof pdfjsLib==='undefined'){ document.getElementById('msg').innerHTML='<span style="color:var(--red)">PDF引擎未就绪，请稍后</span>';return; }
 
   document.getElementById('upload-card').style.display='none';
   document.getElementById('results').style.display='none';
   document.getElementById('loading').style.display='block';
-  document.getElementById('prog').textContent='读取PDF文件...';
+  document.getElementById('prog').textContent='读取PDF...';
 
   var reader=new FileReader();
   reader.onload=function(e){
     document.getElementById('prog').textContent='提取文本...';
     var data=new Uint8Array(e.target.result);
-    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
     pdfjsLib.getDocument({data:data}).promise.then(function(pdf){
       var total=pdf.numPages,done=0,text='';
       var proms=[];
@@ -212,11 +262,11 @@ function handleFile(file){
         }));
       }
       Promise.all(proms).then(function(){
-        document.getElementById('prog').textContent='正在评分...';
+        document.getElementById('prog').textContent='规则引擎评分...';
         setTimeout(function(){
-          try{var r=score(text,total,file.name);document.getElementById('loading').style.display='none';render(r);}
-          catch(err){document.getElementById('loading').style.display='none';document.getElementById('upload-card').style.display='block';document.getElementById('msg').innerHTML='<span style="color:var(--red)">出错: '+err.message+'</span>';}
-        },50);
+          try{ var r=score(text,total,file.name); document.getElementById('prog').textContent='AI语义分析...'; runAIChecks(text,r); }
+          catch(err){ document.getElementById('loading').style.display='none';document.getElementById('upload-card').style.display='block';document.getElementById('msg').innerHTML='<span style="color:var(--red)">出错: '+err.message+'</span>'; }
+        },30);
       });
     }).catch(function(err){
       document.getElementById('loading').style.display='none';document.getElementById('upload-card').style.display='block';
@@ -226,16 +276,62 @@ function handleFile(file){
   reader.readAsArrayBuffer(file);
 }
 
-// ===== Scoring engine =====
+// ===== AI semantic checks (non-blocking) =====
+async function runAIChecks(text, r){
+  // Run semantic checks in parallel if model is ready
+  var aiResults = {};
+  if(window.isAIReady && window.isAIReady()){
+    var checks = ['causal_reasoning', 'original_rewrite', 'balanced_evaluation', 'innovation_expression'];
+    for(var i=0; i<checks.length; i++){
+      var ck = checks[i];
+      var targetText = '';
+      switch(ck){
+        case 'causal_reasoning': targetText = extract(text, ['问题分析','二、问题分析'], ['模型假设','三、']); break;
+        case 'original_rewrite': targetText = extract(text, ['摘 要','摘  要','摘要'], ['关键词','关键字']); break;
+        case 'balanced_evaluation': targetText = extract(text, ['模型评价','模型的评价','模型的分析与评价','优缺点分析','六、模型的'], ['参考文献','附录','七、']); break;
+        case 'innovation_expression': targetText = (extract(text, ['摘 要','摘  要','摘要'], ['关键词','关键字']) + ' ' + text.substring(0, 2000)).substring(0, 500); break;
+      }
+      if(targetText.length > 10){
+        try {
+          var result = await window.semanticCheck(targetText, ck);
+          if(result) aiResults[ck] = result;
+        } catch(e){}
+      }
+    }
+  }
+
+  // Apply AI adjustments to scores
+  if(aiResults.causal_reasoning && aiResults.causal_reasoning.score > 0.1){
+    r.scores.B2 = Math.min(0.60, r.scores.B2 + 0.08);
+    r.ai_notes = (r.ai_notes||'') + '; 问题分析检测到因果推理特征';
+  }
+  if(aiResults.original_rewrite && aiResults.original_rewrite.score > 0.1){
+    r.scores.A3 = Math.max(0.12, Math.min(0.22, r.scores.A3 + 0.05));
+  }
+  if(aiResults.balanced_evaluation && aiResults.balanced_evaluation.score > 0.1){
+    r.scores.D4 = Math.min(0.40, r.scores.D4 + 0.05);
+    r.ai_notes = (r.ai_notes||'') + '; 模型评价检测到优缺平衡特征';
+  }
+  if(aiResults.innovation_expression && aiResults.innovation_expression.score > 0.1){
+    r.scores.C5 = Math.min(0.40, r.scores.C5 + 0.04);
+    r.ai_notes = (r.ai_notes||'') + '; 检测到创新性表述';
+  }
+
+  // Recalculate dimension scores
+  recalcDims(r);
+
+  document.getElementById('loading').style.display='none';
+  render(r);
+}
+
+// ===== Scoring engine (rule-based + AI-augmented) =====
 function score(text,pages,fname){
-  var scores={},fb={};
-  var ab=extract(text,['摘 要','摘  要','摘要'],['关键词','关键字','一、','1.']);
-  var ap=ab||text.substring(0,3000);
+  var scores={},fb={},ab=extract(text,['摘 要','摘  要','摘要'],['关键词','关键字','一、','1.']),ap=ab||text.substring(0,3000);
   var pc=(ap.match(/问题[一二三四1-4]/g)||[]).length,mc=(ap.match(/模型|算法|方法|回归|聚类|优化|预测|检验/g)||[]).length,rc=(ap.match(/结果|得到|求得|求解|计算|发现/g)||[]).length;
   scores.A1=Math.min(0.45,0.15*(pc>=3)+0.15*(mc>=3)+0.15*(rc>=2));
   var nc=(ap.match(/[=＝]\s*\d+\.?\d*|约?\d+\.?\d*\s*(?:千[克]|元|种|%|万)/g)||[]).length;
   scores.A2=Math.min(0.38,0.38*Math.min(nc/4,1));
-  scores.A3=/附件[1-4]|根据附件/.test(ap)?0.12:0.22;
+  scores.A3=/附件[1-4]|根据附件/.test(ap)?0.16:0.22;
   var ae=ap.length>300?ap.substring(ap.length-300):ap;
   scores.A4=Math.min(0.22,0.08*(ae.match(/创新|特色|亮点|优势/g)||[]).length);
   var pu=ap.replace(/摘要|摘\s*要|关键词|关键字|[\s\n]+/g,'');
@@ -243,8 +339,7 @@ function score(text,pages,fname){
   if(scores.A1<0.30) fb.A1='摘要缺少问题→方法→结果的完整链条';
   if(scores.A2<0.25) fb.A2='摘要仅'+nc+'个数值，国一标准每个问题后紧跟具体数值';
 
-  var req=['重述','分析','假设','符号','模型','求解','检验','评价','参考','附录'];
-  var fnd=req.filter(function(s){return text.indexOf(s)!==-1;}),mis=req.filter(function(s){return text.indexOf(s)===-1;});
+  var req=['重述','分析','假设','符号','模型','求解','检验','评价','参考','附录'],fnd=req.filter(function(s){return text.indexOf(s)!==-1;}),mis=req.filter(function(s){return text.indexOf(s)===-1;});
   scores.B1=0.40*fnd.length/req.length;
   if(mis.length>2) fb.B1='缺'+mis.join('、')+'模块';
   var an=extract(text,['问题分析','二、问题分析'],['模型假设','三、']);
@@ -277,32 +372,33 @@ function score(text,pages,fname){
 
   var fg=(text.match(/图\s*\d+|如图|Fig/g)||[]).length,fa=(text.match(/图\s*\d+\s*(?:显示|表明|展示|反映|说明|可以|从中)/g)||[]).length;
   scores.E1=Math.min(0.50,0.35+0.15*Math.min(fa/Math.max(1,fg),1));
-  if(scores.E1<0.40) fb.E1=fg+'处图表引用但仅'+fa+'处有解析文';
+  if(scores.E1<0.40) fb.E1=fg+'处图表引用仅'+fa+'处有解析';
   scores.E2=Math.max(0.25,0.30+0.10*((text.match(/我们|我[^国们]|本组/g)||[]).length/Math.max(1,text.length)*10000<2));
   var rs=new Set(text.match(/\[\d+\]/g)||[]).size,er=(text.substring(Math.max(0,text.length-5000)).match(/[A-Z][a-z]{3,}.*\d{4}/g)||[]).length;
   scores.E3=Math.min(0.30,0.22+0.08*Math.min(rs/10,1)*0.6+0.08*Math.min(er/3,1)*0.4);
   scores.E4=/\(\d+[-\d]*\)\s*$/.test(text)?0.30:0.22;
 
+  var r={fname:fname,pages:pages,chars:text.length,scores:scores,fb:fb,found:fnd,missing:mis,ai_notes:''};
+  recalcDims(r);
+  return r;
+}
+
+function recalcDims(r){
   var mv={A1:0.45,A2:0.38,A3:0.22,A4:0.22,A5:0.22,B1:0.40,B2:0.60,B3:0.50,B4:0.50,B5:0.50,C1:0.60,C2:0.40,C3:0.60,C4:0.50,C5:0.40,D1:0.80,D2:0.40,D3:0.40,D4:0.40,E1:0.50,E2:0.40,E3:0.30,E4:0.30};
   var mp={'假设':['B1','B2','B3','B4','B5'],'建模':['C1','C2','C3','C4','C5'],'结果':['D1','D2','D3','D4'],'表述':['A1','A2','A3','A4','A5','E1','E2','E3','E4']};
   var dims={},dl={'假设':'假设的合理性','建模':'建模的创造性','结果':'结果的正确性','表述':'文字表述的清晰性'};
-  for(var d in mp){var g=0,m=0;mp[d].forEach(function(k){g+=scores[k]||0;m+=mv[k]||0;});dims[d]=m>0?+(g/m*10).toFixed(1):0;}
-  var total=+(0.20*dims['假设']+0.35*dims['建模']+0.30*dims['结果']+0.15*dims['表述']).toFixed(2);
-  var t23=+Object.values(scores).reduce(function(a,b){return a+b;},0).toFixed(2);
-  var award=total>=9?'稳国一':total>=8?'国一竞争力':total>=7?'国二':total>=6?'省一':total>=5?'省二~省三':'需大幅改进';
-  return {fname:fname,pages:pages,chars:text.length,total:total,t23:t23,award:award,dims:dims,dl:dl,scores:scores,fb:fb,found:fnd,missing:mis,mv:mv};
+  for(var d in mp){var g=0,m=0;mp[d].forEach(function(k){g+=r.scores[k]||0;m+=mv[k]||0;});dims[d]=m>0?+(g/m*10).toFixed(1):0;}
+  r.dims=dims; r.dl=dl; r.mv=mv;
+  r.total=+(0.20*dims['假设']+0.35*dims['建模']+0.30*dims['结果']+0.15*dims['表述']).toFixed(2);
+  r.t23=+Object.values(r.scores).reduce(function(a,b){return a+b;},0).toFixed(2);
+  r.award=r.total>=9?'稳国一':r.total>=8?'国一竞争力':r.total>=7?'国二':r.total>=6?'省一':r.total>=5?'省二~省三':'需大幅改进';
 }
 
 function extract(text,starts,ends){
-  for(var i=0;i<starts.length;i++){
-    var idx=text.indexOf(starts[i]);if(idx===-1)continue;
-    var end=idx+3000;
-    for(var j=0;j<ends.length;j++){var ei=text.indexOf(ends[j],idx+starts[i].length);if(ei!==-1&&ei<end)end=ei;}
-    return text.substring(idx,Math.min(end,text.length));
-  }
-  return '';
+  for(var i=0;i<starts.length;i++){var idx=text.indexOf(starts[i]);if(idx===-1)continue;var end=idx+3000;for(var j=0;j<ends.length;j++){var ei=text.indexOf(ends[j],idx+starts[i].length);if(ei!==-1&&ei<end)end=ei;}return text.substring(idx,Math.min(end,text.length));}return '';
 }
 
+// ===== Render =====
 function render(r){
   var awc={'稳国一':'#2f5496','国一竞争力':'#3b82f6','国二':'#38a169','省一':'#d69e2e','省二~省三':'#ed8936','需大幅改进':'#e53e3e'};
   var dc={'假设':'#3182ce','建模':'#805ad5','结果':'#38a169','表述':'#dd6b20'};
@@ -313,7 +409,9 @@ function render(r){
   var h='<div class="card"><div class="hero">';
   h+='<div class="circle" style="background:'+ac+'"><span class="big">'+r.total+'</span><span class="sub">/10分</span></div>';
   h+='<div class="meta"><h2>'+r.fname+' <span class="award" style="background:'+ac+'">'+r.award+'</span></h2>';
-  h+='<p class="info">'+r.pages+'页 · '+r.chars.toLocaleString()+'字符 · 23项总分'+r.t23+'/10.00</p><p style="margin-top:4px">';
+  h+='<p class="info">'+r.pages+'页 · '+r.chars.toLocaleString()+'字符 · 23项总分'+r.t23+'/10.00';
+  if(r.ai_notes) h+=' <span class="ai-tag">AI辅助</span>';
+  h+='</p><p style="margin-top:4px">';
   r.found.forEach(function(s){h+='<span class="tag tag-ok">'+s+'</span> ';});
   r.missing.forEach(function(s){h+='<span class="tag tag-no">缺:'+s+'</span> ';});
   h+='</p></div></div>';
@@ -333,7 +431,6 @@ function render(r){
       h+='<tr><td>'+k+'</td><td>'+nm[k]+'</td><td>'+sc.toFixed(2)+'</td><td>'+mx.toFixed(2)+'</td><td class="'+gc+'">'+rate+'%</td></tr>';});
     h+='</table>';});
   h+='</div>';
-
   h+='<div style="text-align:center;padding:12px"><button class="btn" style="background:#718096" onclick="location.reload()">重新上传</button></div>';
   document.getElementById('results').innerHTML=h;document.getElementById('results').style.display='block';
 }
