@@ -4,7 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>数学建模论文预评分系统</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+// Fallback if jsdelivr fails
+if(typeof pdfjsLib === 'undefined') {
+  document.write('<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"><\/script>');
+}
+// Final fallback check
+window.addEventListener('load', function() {
+  if(typeof pdfjsLib === 'undefined') {
+    document.getElementById('upload-card').innerHTML = '<div style="text-align:center;padding:40px;color:#e53e3e"><p style="font-size:1.2em">PDF引擎加载失败</p><p style="margin-top:8px;color:#718096">网络无法访问CDN，请尝试刷新页面或使用VPN</p></div>';
+  }
+});
+</script>
 <style>
 :root {
   --primary: #1a365d; --primary-light: #2f5496; --accent: #e53e3e;
@@ -91,7 +103,7 @@ th { background:#f7fafc; font-weight:600; color:#4a5568; font-size:.78em; }
 <div class="footer">校准锚点: 祭酒 2023年C题国一论文 9.78/10 · 给分制 · 四把尺子校准 · 仅作预筛参考</div>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
 const dropZone = document.getElementById('drop-zone');
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
