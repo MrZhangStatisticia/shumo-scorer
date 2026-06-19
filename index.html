@@ -88,26 +88,7 @@ th { background:#f7fafc;font-weight:600;color:#4a5568; }
 
 <div class="header">
   <h1>数学建模论文预评分系统 <span class="ver">v2.3</span></h1>
-  <p class="sub">上传PDF → 提取文本 → 规则评分 + DeepSeek语义增强 → 修改建议</p>
-  <div id="ds-bar" style="margin-top:6px;font-size:.75em;opacity:.85">
-    <span id="ds-status" style="cursor:pointer" onclick="toggleDS()">🧠 AI增强：关闭</span>
-  </div>
-</div>
-
-<!-- DeepSeek config modal -->
-<div class="modal-overlay" id="ds-modal">
-<div class="modal" style="max-width:440px">
-  <h2>DeepSeek AI 增强设置</h2>
-  <p style="font-size:.85em;color:var(--muted);margin-bottom:10px">使用 DeepSeek 免费 API 进行语义分析，提升评分准确度。</p>
-  <p style="font-size:.78em;margin:6px 0">API Key（<a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--primary-light)">在此获取</a>，免费注册）</p>
-  <input id="ds-key" type="password" placeholder="sk-xxxxxxxx" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:.9em">
-  <p style="font-size:.7em;color:var(--muted);margin-top:4px">Key 仅存储在浏览器本地，不会上传到任何服务器。</p>
-  <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
-    <button class="btn" onclick="saveDS()">保存并启用</button>
-    <button class="btn" style="background:#718096" onclick="document.getElementById('ds-modal').style.display='none'">取消</button>
-  </div>
-  <p id="ds-msg" style="font-size:.75em;color:var(--green);margin-top:8px;text-align:center"></p>
-</div>
+  <p class="sub">上传PDF → 提取文本 → 多模式规则评分 → 修改建议</p>
 </div>
 
 <div class="container">
@@ -127,7 +108,7 @@ th { background:#f7fafc;font-weight:600;color:#4a5568; }
 </div>
 
 <div class="footer">
-  数学建模论文预评分系统 v2.1 · 规则引擎 + 本地AI语义检测 · 纯浏览器运行 · 零费用
+  数学建模论文预评分系统 v2.3 · 多模式规则引擎 · 纯浏览器运行 · 零费用 · 零配置
 </div>
 
 
@@ -170,64 +151,6 @@ window.dontShowAgain = function(){ localStorage.setItem('shumo-hide-welcome-v2',
 
 <!-- Main processing script -->
 <script>
-// ===== DeepSeek Integration =====
-var dsEnabled = false, dsKey = localStorage.getItem('shumo-ds-key')||'';
-
-function updateDSStatus(){
-  var el = document.getElementById('ds-status');
-  if(dsEnabled && dsKey) el.innerHTML = '🧠 AI增强：<b style="color:#90EE90">已启用</b> (点击设置)';
-  else el.innerHTML = '🧠 AI增强：关闭 (点击开启)';
-}
-updateDSStatus();
-
-function toggleDS(){
-  if(dsEnabled){ dsEnabled=false; updateDSStatus(); return; }
-  document.getElementById('ds-key').value = dsKey;
-  document.getElementById('ds-modal').style.display = 'flex';
-}
-
-function saveDS(){
-  dsKey = document.getElementById('ds-key').value.trim();
-  if(!dsKey){ document.getElementById('ds-msg').textContent='请输入API Key'; return; }
-  localStorage.setItem('shumo-ds-key', dsKey);
-  dsEnabled = true;
-  document.getElementById('ds-modal').style.display = 'none';
-  document.getElementById('ds-msg').textContent = '';
-  updateDSStatus();
-}
-
-async function deepseekAnalyze(abstract, problemAnalysis, modelEval){
-  if(!dsEnabled || !dsKey) return null;
-  var prompt = '你是数学建模竞赛论文评审专家。请对以下论文内容做4项语义判断，只返回JSON：\n'
-    +'{\n'
-    +'  "causal_reasoning": {"has": true/false, "note": "问题分析是否有因果推理(因为X所以选Y)，而非仅是流程描述(首先其次然后)"},\n'
-    +'  "original_rewrite": {"has": true/false, "note": "摘要是否用自己的话改写背景，而非照抄原题附件表述"},\n'
-    +'  "balanced_eval": {"has": true/false, "note": "模型评价是否有实质性优缺点分析，而非仅说模型优秀"},\n'
-    +'  "innovation_express": {"has": true/false, "note": "是否有方法论层面的创新表述，而非仅列举使用了哪些方法"}\n'
-    +'}\n只返回JSON，不要其他文字。\n\n'
-    +'【摘要】\n'+abstract.substring(0,600)+'\n\n'
-    +'【问题分析】\n'+problemAnalysis.substring(0,500)+'\n\n'
-    +'【模型评价】\n'+modelEval.substring(0,400);
-
-  try {
-    var resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+dsKey},
-      body: JSON.stringify({model:'deepseek-chat', messages:[{role:'user',content:prompt}], temperature:0, max_tokens:300})
-    });
-    var data = await resp.json();
-    if(data.choices && data.choices[0]){
-      var txt = data.choices[0].message.content;
-      // Extract JSON
-      var m = txt.match(/\{[\s\S]*\}/);
-      if(m) return JSON.parse(m[0]);
-    }
-  } catch(e){ console.log('DeepSeek error:', e); }
-  return null;
-}
-</script>
-
-<script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
 function handleFile(file){
@@ -257,7 +180,7 @@ function handleFile(file){
       Promise.all(proms).then(function(){
         document.getElementById('prog').textContent='规则引擎评分...';
         setTimeout(function(){
-          try{ var r=scoreV2(text,total,file.name); if(dsEnabled&&dsKey){ document.getElementById('prog').textContent='DeepSeek语义分析...'; deepseekAnalyze(r._ab||'', r._an||'', r._es||'').then(function(ai){ if(ai){ applyAI(r,ai); } document.getElementById('loading').style.display='none'; render(r); }); } else { document.getElementById('loading').style.display='none'; render(r); } }
+          try{ var r=scoreV2(text,total,file.name); document.getElementById('loading').style.display='none'; render(r); }
           catch(err){ document.getElementById('loading').style.display='none';document.getElementById('upload-card').style.display='block';document.getElementById('msg').innerHTML='<span style="color:var(--red)">出错: '+err.message+'</span>'; }
         },30);
       });
@@ -269,26 +192,6 @@ function handleFile(file){
   reader.readAsArrayBuffer(file);
 }
 
-// ===== Apply DeepSeek semantic analysis to scores =====
-function applyAI(r, ai){
-  r._ai = ai;
-  if(ai.causal_reasoning && ai.causal_reasoning.has){
-    r.scores.B2 = Math.min(0.60, r.scores.B2 + 0.10); r._aiNote = (r._aiNote||'')+'因果推理✓ ';
-  }
-  if(ai.original_rewrite && !ai.original_rewrite.has){
-    r.scores.A3 = Math.max(0.10, r.scores.A3 - 0.04);
-  }
-  if(ai.balanced_eval && ai.balanced_eval.has){
-    r.scores.D4 = Math.min(0.40, r.scores.D4 + 0.06); r._aiNote = (r._aiNote||'')+'优缺平衡✓ ';
-  }
-  if(ai.innovation_express && ai.innovation_express.has){
-    r.scores.A4 = Math.min(0.22, r.scores.A4 + 0.06);
-    r.scores.C5 = Math.min(0.40, r.scores.C5 + 0.04); r._aiNote = (r._aiNote||'')+'创新表述✓ ';
-  }
-  recalcDimsV2(r);
-}
-
-// ===== Scoring engine =====
 function score(text,pages,fname){
   var scores={},fb={},ab=extract(text,['摘 要','摘  要','摘要'],['关键词','关键字','一、','1.']),ap=ab||text.substring(0,3000);
   var pc=(ap.match(/问题[一二三四1-4]/g)||[]).length,mc=(ap.match(/模型|算法|方法|回归|聚类|优化|预测|检验/g)||[]).length,rc=(ap.match(/结果|得到|求得|求解|计算|发现/g)||[]).length;
@@ -374,7 +277,6 @@ function render(r){
   h+='<div class="circle" style="background:'+ac+'"><span class="big">'+r.total+'</span><span class="sub">/10分</span></div>';
   h+='<div class="meta"><h2>'+r.fname+' <span class="award" style="background:'+ac+'">'+r.award+'</span></h2>';
   h+='<p class="info">'+r.pages+'页 · '+r.chars.toLocaleString()+'字符 · 23项总分'+r.t23+'/10.00';
-  if(r._aiNote) h+=' <span style="display:inline-block;background:#e8f4fd;color:#2f5496;font-size:.65em;padding:1px 6px;border-radius:3px;margin-left:4px">DeepSeek: '+r._aiNote+'</span>';
   h+='</p><p style="margin-top:4px">';
   r.found.forEach(function(s){h+='<span class="tag tag-ok">'+s+'</span> ';});
   r.missing.forEach(function(s){h+='<span class="tag tag-no">缺:'+s+'</span> ';});
