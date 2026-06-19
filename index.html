@@ -3,220 +3,248 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>数学建模论文预评分系统</title>
+<title>数学建模论文预评分系统 v2.0</title>
 <style>
+:root {
+  --primary: #1a365d; --primary-light: #2f5496; --accent: #e53e3e;
+  --bg: #f0f4f8; --card: #fff; --text: #2d3748; --muted: #718096;
+  --border: #e2e8f0; --green: #38a169; --blue: #3182ce; --yellow: #d69e2e; --red: #e53e3e; --purple: #805ad5;
+}
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: "Microsoft YaHei", sans-serif; background:#f0f4f8; color:#2d3748; min-height:100vh; }
-.header { background:linear-gradient(135deg,#1a365d,#2f5496); color:#fff; padding:20px; text-align:center; }
-.header h1 { font-size:1.3em; }
-.header p { font-size:.8em; opacity:.8; margin-top:4px; }
-.card { background:#fff; border-radius:10px; padding:20px; margin:16px auto; max-width:1100px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
-.upload-zone { border:2px dashed #cbd5e0; border-radius:10px; padding:50px 20px; text-align:center; cursor:pointer; transition:all .3s; }
-.upload-zone:hover,.dragover { border-color:#2f5496; background:#eff6ff; }
-.upload-zone .icon { font-size:3em; }
-.btn { display:inline-block; margin:12px 4px; padding:10px 28px; background:#2f5496; color:#fff; border:none; border-radius:6px; font-size:.95em; cursor:pointer; font-weight:600; }
-.btn:hover { background:#1e40af; }
-#file-input { display:none; }
-#msg { margin-top:12px; font-size:.85em; color:#718096; min-height:20px; }
-#loading { display:none; text-align:center; padding:30px; }
-#loading .spinner { width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:#2f5496;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px; }
+body { font-family: -apple-system,"Microsoft YaHei","PingFang SC",sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* ========== HEADER ========== */
+.header { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:#fff; padding:18px 0; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+.header h1 { font-size:1.35em; font-weight:700; letter-spacing:1px; }
+.header .sub { opacity:.8; font-size:.78em; margin-top:2px; }
+.header .ver { display:inline-block; background:rgba(255,255,255,.2); padding:2px 10px; border-radius:10px; font-size:.7em; margin-left:8px; }
+
+/* ========== CONTAINER ========== */
+.container { max-width:1100px; margin:0 auto; padding:18px 16px; }
+.card { background:var(--card); border-radius:10px; padding:22px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+
+/* ========== MODAL ========== */
+.modal-overlay { position:fixed; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center; }
+.modal { background:#fff; border-radius:12px; padding:28px 30px; max-width:600px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,.25); position:relative; }
+.modal h2 { font-size:1.2em; color:var(--primary); margin-bottom:16px; text-align:center; }
+.modal .steps { counter-reset:step; }
+.modal .step { display:flex; gap:12px;margin-bottom:14px;align-items:flex-start; }
+.modal .step-num { width:28px;height:28px;background:var(--primary-light);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8em;font-weight:700;flex-shrink:0; }
+.modal .step-text { font-size:.88em;line-height:1.6;flex:1; }
+.modal .step-text code { background:#f0f4f8;padding:2px 6px;border-radius:3px;font-size:.85em; }
+.modal .note { background:#fff3cd;padding:12px;border-radius:6px;font-size:.82em;margin-top:12px;color:#856404; }
+.modal .close-btn { display:block;margin:16px auto 0;padding:10px 36px;background:var(--primary-light);color:#fff;border:none;border-radius:6px;font-size:.95em;cursor:pointer;font-weight:600; }
+.modal .dont-show { display:block;text-align:center;margin-top:8px;font-size:.78em;color:var(--muted);cursor:pointer; }
+
+/* ========== UPLOAD ZONE ========== */
+.upload-zone { border:2px dashed #cbd5e0; border-radius:10px; padding:42px 20px; text-align:center; cursor:pointer; transition:all .25s; }
+.upload-zone:hover,.dragover { border-color:var(--primary-light); background:#eff6ff; }
+.upload-zone .icon { font-size:2.8em;margin-bottom:6px; }
+.upload-zone .btn { display:inline-block;margin:10px 4px;padding:10px 24px;background:var(--primary-light);color:#fff;border:none;border-radius:6px;font-size:.9em;cursor:pointer;font-weight:600; }
+.upload-zone .btn:hover { background:#1e40af; }
+.upload-zone .btn-outline { background:#fff; color:var(--primary-light); border:1px solid var(--primary-light); }
+.upload-zone .btn-outline:hover { background:#eff6ff; }
+#msg { margin-top:10px;font-size:.82em;color:var(--muted);min-height:20px; }
+
+/* ========== LOADING & RESULTS ========== */
+#loading { display:none;text-align:center;padding:30px; }
+.spinner { width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:var(--primary-light);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px; }
 @keyframes spin { to{transform:rotate(360deg);} }
 #results { display:none; }
 .hero { display:flex;align-items:center;gap:20px;flex-wrap:wrap; }
 .circle { width:100px;height:100px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0; }
 .circle .big { font-size:2em;line-height:1; }
-.circle .sub { font-size:.7em;opacity:.9; }
-.meta h2 { font-size:1.1em;margin-bottom:4px; }
-.meta .info { font-size:.8em;color:#718096; }
-.award { display:inline-block;padding:4px 14px;border-radius:15px;font-weight:700;font-size:.85em;color:#fff; }
+.circle .sub { font-size:.68em;opacity:.9; }
+.meta h2 { font-size:1.05em;margin-bottom:4px;word-break:break-all; }
+.meta .info { font-size:.8em;color:var(--muted); }
+.award { display:inline-block;padding:4px 14px;border-radius:15px;font-weight:700;font-size:.82em;color:#fff; }
 .bars { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px; }
-.bar-item { display:flex;align-items:center;gap:6px;font-size:.82em; }
-.bar-item span { flex-shrink:0; }
-.bar-item .bg { flex:1;height:16px;background:#e2e8f0;border-radius:8px;overflow:hidden; }
-.bar-item .fill { height:100%;border-radius:8px;transition:width .6s; }
+.bar-item { display:flex;align-items:center;gap:6px;font-size:.8em; }
+.bar-item .bg { flex:1;height:15px;background:var(--border);border-radius:8px;overflow:hidden; }
+.bar-item .fill { height:100%;border-radius:8px;transition:width .7s; }
 .bar-item .v { width:28px;text-align:right;font-weight:600; }
-.tag { display:inline-block;padding:2px 6px;border-radius:3px;font-size:.7em;margin:2px; }
+.tag { display:inline-block;padding:2px 6px;border-radius:3px;font-size:.68em;margin:2px; }
 .tag-ok { background:#c6f6d5;color:#276749; }
 .tag-no { background:#fed7d7;color:#c53030; }
-.fb { background:#fff5f5;border-left:3px solid #e53e3e;padding:10px 14px;margin:6px 0;border-radius:0 6px 6px 0;font-size:.85em; }
-table { width:100%;border-collapse:collapse;font-size:.78em; }
-th,td { padding:5px 8px;text-align:left;border-bottom:1px solid #e2e8f0; }
-th { background:#f7fafc;font-weight:600; }
-.rate-A{color:#38a169;font-weight:700}.rate-B{color:#3182ce;font-weight:700}.rate-C{color:#d69e2e;font-weight:700}.rate-D{color:#e53e3e;font-weight:700}
-.ft { text-align:center;font-size:.75em;color:#a0aec0;padding:12px; }
+.fb { background:#fff5f5;border-left:3px solid var(--accent);padding:10px 14px;margin:6px 0;border-radius:0 6px 6px 0;font-size:.83em; }
+table { width:100%;border-collapse:collapse;font-size:.76em; }
+th,td { padding:5px 8px;text-align:left;border-bottom:1px solid var(--border); }
+th { background:#f7fafc;font-weight:600;color:#4a5568; }
+.rate-A{color:var(--green);font-weight:700}.rate-B{color:var(--blue);font-weight:700}.rate-C{color:var(--yellow);font-weight:700}.rate-D{color:var(--red);font-weight:700}
+.footer { text-align:center;padding:14px;font-size:.72em;color:#a0aec0;border-top:1px solid var(--border);margin-top:20px; }
+.footer a { color:var(--muted); }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>数学建模论文预评分系统</h1>
-  <p>上传PDF → 提取文本 → 给分制评分 → 修改建议 | 校准锚点: 9.78分国一论文</p>
-</div>
-
-<div class="card" id="upload-card">
-  <div class="upload-zone" id="drop-zone">
-    <div class="icon">📄</div>
-    <p><b>拖拽PDF到此处</b> 或点击按钮选择文件</p>
-    <button class="btn" id="pick-btn">选择 PDF 文件</button>
-    <input type="file" id="file-input" accept=".pdf" style="display:none">
-    <p id="msg"><span style="color:#38a169">页面已就绪 ✓</span> 正在加载PDF引擎...</p>
+<!-- ========== WELCOME MODAL ========== -->
+<div class="modal-overlay" id="welcome-modal">
+<div class="modal">
+  <h2>📋 数学建模论文预评分系统</h2>
+  <div class="steps">
+    <div class="step"><span class="step-num">1</span><span class="step-text"><b>上传论文</b><br>拖拽PDF到虚线框内，或点击「选择文件」按钮。系统使用 PDF.js 引擎在浏览器本地提取文本，<b>不会上传任何数据</b>。</span></div>
+    <div class="step"><span class="step-num">2</span><span class="step-text"><b>自动评分</b><br>系统按照<b>给分制</b>标准，从整体印象出发，用四大标准（假设合理性、建模创造性、结果正确性、表述清晰性）校准，输出 23 项细化评分。</span></div>
+    <div class="step"><span class="step-num">3</span><span class="step-text"><b>查看报告</b><br>获得总分/10、预测奖项区间、四维雷达、优先修改建议和 23 项明细表。论文<b>不离开你的浏览器</b>，安全放心。</span></div>
   </div>
+  <div class="note">
+    <b>⚠ 注意事项</b><br>
+    · 仅支持<b>文本版</b> PDF（Word/LaTeX 导出的）。扫描图像版需先 OCR 处理。<br>
+    · 本系统为<b>预筛辅助工具</b>，评分仅供参考，不代表官方评审结果。<br>
+    · 校准锚点：2023年C题国一论文 9.78/10（浙江省第3名）。
+  </div>
+  <button class="close-btn" onclick="closeModal()">开始使用</button>
+  <span class="dont-show" onclick="dontShowAgain()">不再显示此提示</span>
+</div>
 </div>
 
+<!-- ========== HEADER ========== -->
+<div class="header">
+  <h1>数学建模论文预评分系统 <span class="ver">v2.0</span></h1>
+  <p class="sub">上传PDF → 提取文本 → 给分制评分 → 修改建议 &nbsp;|&nbsp; 校准锚点: 9.78分国一论文</p>
+</div>
+
+<!-- ========== MAIN ========== -->
+<div class="container">
+
+  <div class="card" id="upload-card">
+    <div class="upload-zone" id="drop-zone">
+      <div class="icon">📄</div>
+      <p><b>拖拽学生论文 PDF 到此处</b></p>
+      <p style="font-size:.8em;color:var(--muted);margin:4px 0">或使用下方按钮</p>
+      <button class="btn" id="pick-btn">📁 选择 PDF 文件</button>
+      <button class="btn btn-outline" id="demo-btn">🧪 使用帮助</button>
+      <input type="file" id="file-input" accept=".pdf" style="display:none">
+      <p id="msg"><span style="color:var(--green)">✓ 页面就绪</span> · 正在加载PDF引擎...</p>
+    </div>
+  </div>
+
+  <div class="card" id="loading"><div class="spinner"></div><p>正在分析论文...</p><p style="font-size:.8em;color:var(--muted)" id="prog"></p></div>
+
+  <div id="results"></div>
+</div>
+
+<div class="footer">
+  数学建模论文预评分系统 v2.0 · 校准锚点: 2023年C题国一 9.78/10 · 纯浏览器本地运行 · 数据不上传<br>
+  <a href="https://github.com/MrZhangStatisticia/shumo-scorer" target="_blank">GitHub</a>
+</div>
+
+<!-- ========== SCRIPTS ========== -->
 <script>
-// The simplest possible test - this MUST work
+// ===== Welcome modal =====
 (function(){
-  var btn = document.getElementById('pick-btn');
-  var inp = document.getElementById('file-input');
-  var msg = document.getElementById('msg');
-  var dz  = document.getElementById('drop-zone');
+  if(localStorage.getItem('shumo-hide-welcome')) return;
+  document.getElementById('welcome-modal').style.display = 'flex';
+})();
+function closeModal(){ document.getElementById('welcome-modal').style.display='none'; }
+function dontShowAgain(){ localStorage.setItem('shumo-hide-welcome','1'); closeModal(); }
 
-  // Button click
-  btn.onclick = function(){ inp.click(); };
+// ===== Event handlers =====
+(function(){
+  var btn=document.getElementById('pick-btn');
+  var dbn=document.getElementById('demo-btn');
+  var inp=document.getElementById('file-input');
+  var msg=document.getElementById('msg');
+  var dz=document.getElementById('drop-zone');
 
-  // File selected
-  inp.onchange = function(e){
-    if(e.target.files.length > 0){
-      msg.innerHTML = '<span style="color:#38a169">已选择文件: '+e.target.files[0].name+' ('+(e.target.files[0].size/1024).toFixed(0)+'KB)，开始处理...</span>';
+  btn.onclick=function(){ inp.click(); };
+  dbn.onclick=function(){ document.getElementById('welcome-modal').style.display='flex'; };
+
+  inp.onchange=function(e){
+    if(e.target.files.length>0){
+      msg.innerHTML='<span style="color:var(--green)">已选择: '+e.target.files[0].name+' ('+(e.target.files[0].size/1024).toFixed(0)+'KB)，处理中...</span>';
       handleFile(e.target.files[0]);
     }
   };
-
-  // Drag & drop
-  dz.ondragover = function(e){ e.preventDefault(); dz.classList.add('dragover'); };
-  dz.ondragleave = function(e){ e.preventDefault(); dz.classList.remove('dragover'); };
-  dz.ondrop = function(e){
-    e.preventDefault();
-    dz.classList.remove('dragover');
-    if(e.dataTransfer.files.length > 0){
-      msg.innerHTML = '<span style="color:#38a169">已拖入文件: '+e.dataTransfer.files[0].name+'，开始处理...</span>';
+  dz.ondragover=function(e){e.preventDefault();dz.classList.add('dragover');};
+  dz.ondragleave=function(e){e.preventDefault();dz.classList.remove('dragover');};
+  dz.ondrop=function(e){
+    e.preventDefault();dz.classList.remove('dragover');
+    if(e.dataTransfer.files.length>0){
+      msg.innerHTML='<span style="color:var(--green)">已拖入: '+e.dataTransfer.files[0].name+'，处理中...</span>';
       handleFile(e.dataTransfer.files[0]);
     }
   };
 })();
-</script>
 
-<div class="card" id="loading"><div class="spinner"></div><p>正在分析论文...</p><p style="font-size:.8em;color:#718096" id="prog"></p></div>
-
-<div id="results"></div>
-<div class="ft">校准锚点: 祭酒 2023年C题国一论文 9.78/10 · 仅作预筛参考</div>
-
-<script>
-// ====== STEP 0: Check PDF.js loaded ======
+// ===== PDF.js loader =====
 (function checkLib(){
-  if(typeof pdfjsLib !== 'undefined') {
-    document.getElementById('msg').textContent = 'PDF引擎已就绪，可以上传';
-    return;
-  }
+  if(typeof pdfjsLib!=='undefined'){ document.getElementById('msg').innerHTML='<span style="color:var(--green)">✓ PDF引擎就绪</span> · 拖拽或点击上传即可';return; }
   setTimeout(function(){
-    if(typeof pdfjsLib !== 'undefined') {
-      document.getElementById('msg').textContent = 'PDF引擎已就绪，可以上传';
-      return;
-    }
-    document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">PDF引擎加载较慢，请稍候...如果持续无法加载，请刷新页面</span>';
-    // Try loading again
-    var s = document.createElement('script');
-    s.src = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js';
-    s.onload = function(){ document.getElementById('msg').textContent = 'PDF引擎已就绪，可以上传'; };
-    s.onerror = function(){ document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">PDF引擎加载失败，请检查网络或使用VPN访问</span>'; };
+    if(typeof pdfjsLib!=='undefined'){ document.getElementById('msg').innerHTML='<span style="color:var(--green)">✓ PDF引擎就绪</span> · 拖拽或点击上传即可';return; }
+    document.getElementById('msg').innerHTML='<span style="color:var(--yellow)">PDF引擎加载较慢，请稍候...</span>';
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js';
+    s.onload=function(){ document.getElementById('msg').innerHTML='<span style="color:var(--green)">✓ PDF引擎就绪</span> · 拖拽或点击上传即可'; };
+    s.onerror=function(){ document.getElementById('msg').innerHTML='<span style="color:var(--red)">PDF引擎加载失败，请刷新页面或检查网络</span>'; };
     document.head.appendChild(s);
-  }, 3000);
+  },3000);
 })();
 
-// File input, drag & drop handlers are set inline above (no conflict)
-
-// ====== STEP 3: Process file ======
+// ===== File processing =====
 function handleFile(file){
-  if(!file.name.toLowerCase().endsWith('.pdf')){
-    document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">请上传PDF格式文件</span>';
-    return;
-  }
-  if(typeof pdfjsLib === 'undefined'){
-    document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">PDF引擎尚未加载完成，请稍后重试</span>';
-    return;
-  }
+  if(!file.name.toLowerCase().endsWith('.pdf')){ document.getElementById('msg').innerHTML='<span style="color:var(--red)">请上传PDF格式文件</span>';return; }
+  if(typeof pdfjsLib==='undefined'){ document.getElementById('msg').innerHTML='<span style="color:var(--red)">PDF引擎未就绪，请稍后重试</span>';return; }
 
-  document.getElementById('upload-card').style.display = 'none';
-  document.getElementById('results').style.display = 'none';
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('prog').textContent = '读取PDF文件...';
+  document.getElementById('upload-card').style.display='none';
+  document.getElementById('results').style.display='none';
+  document.getElementById('loading').style.display='block';
+  document.getElementById('prog').textContent='读取PDF文件...';
 
-  var reader = new FileReader();
-  reader.onload = function(e){
-    document.getElementById('prog').textContent = '提取文本...';
-    var data = new Uint8Array(e.target.result);
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-
+  var reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('prog').textContent='提取文本...';
+    var data=new Uint8Array(e.target.result);
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
     pdfjsLib.getDocument({data:data}).promise.then(function(pdf){
-      var total = pdf.numPages, done = 0, text = '';
-      var promises = [];
-      for(var i=1; i<=total; i++){
-        promises.push(
-          pdf.getPage(i).then(function(page){
-            return page.getTextContent().then(function(ct){
-              var strs = ct.items.map(function(it){ return it.str; });
-              text += strs.join(' ') + '\n';
-              done++;
-              document.getElementById('prog').textContent = '提取文本: '+done+'/'+total+'页';
-            });
-          })
-        );
+      var total=pdf.numPages,done=0,text='';
+      var proms=[];
+      for(var i=1;i<=total;i++){
+        proms.push(pdf.getPage(i).then(function(page){
+          return page.getTextContent().then(function(ct){
+            text+=ct.items.map(function(it){return it.str;}).join(' ')+'\n';
+            done++;document.getElementById('prog').textContent='提取文本: '+done+'/'+total+'页';
+          });
+        }));
       }
-      Promise.all(promises).then(function(){
-        document.getElementById('prog').textContent = '正在评分...';
+      Promise.all(proms).then(function(){
+        document.getElementById('prog').textContent='正在评分...';
         setTimeout(function(){
-          try {
-            var result = score(text, total, file.name);
-            document.getElementById('loading').style.display = 'none';
-            render(result);
-          } catch(err) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('upload-card').style.display = 'block';
-            document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">评分出错: '+err.message+'</span>';
-          }
-        }, 50);
+          try{var r=score(text,total,file.name);document.getElementById('loading').style.display='none';render(r);}
+          catch(err){document.getElementById('loading').style.display='none';document.getElementById('upload-card').style.display='block';document.getElementById('msg').innerHTML='<span style="color:var(--red)">出错: '+err.message+'</span>';}
+        },50);
       });
     }).catch(function(err){
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('upload-card').style.display = 'block';
-      document.getElementById('msg').innerHTML = '<span style="color:#e53e3e">PDF解析失败: '+err.message+'。请确认是文本版PDF(非扫描图片)。</span>';
+      document.getElementById('loading').style.display='none';document.getElementById('upload-card').style.display='block';
+      document.getElementById('msg').innerHTML='<span style="color:var(--red)">PDF解析失败: '+err.message+'。请确认是文本版PDF(非扫描图片)。</span>';
     });
   };
   reader.readAsArrayBuffer(file);
 }
 
-// ====== STEP 4: Scoring engine ======
-function score(text, pages, fname){
-  var scores={}, fb={};
-  var ab = extract(text, ['摘 要','摘  要','摘要'], ['关键词','关键字','一、','1.']);
-  var ap = ab || text.substring(0,3000);
-
-  var pc = (ap.match(/问题[一二三四1-4]/g)||[]).length;
-  var mc = (ap.match(/模型|算法|方法|回归|聚类|优化|预测|检验/g)||[]).length;
-  var rc = (ap.match(/结果|得到|求得|求解|计算|发现/g)||[]).length;
-  scores.A1 = Math.min(0.45, 0.15*(pc>=3)+0.15*(mc>=3)+0.15*(rc>=2));
-
-  var nc = (ap.match(/[=＝]\s*\d+\.?\d*|约?\d+\.?\d*\s*(?:千[克]|元|种|%|万)/g)||[]).length;
-  scores.A2 = Math.min(0.38, 0.38*Math.min(nc/4,1));
-
-  scores.A3 = /附件[1-4]|根据附件/.test(ap)?0.12:0.22;
-  var ae = ap.length>300?ap.substring(ap.length-300):ap;
-  scores.A4 = Math.min(0.22, 0.08*(ae.match(/创新|特色|亮点|优势/g)||[]).length);
-  var pu = ap.replace(/摘要|摘\s*要|关键词|关键字|[\s\n]+/g,'');
-  scores.A5 = pu.length>100&&pu.length<600?0.22:(pu.length<1000?0.16:0.10);
+// ===== Scoring engine =====
+function score(text,pages,fname){
+  var scores={},fb={};
+  var ab=extract(text,['摘 要','摘  要','摘要'],['关键词','关键字','一、','1.']);
+  var ap=ab||text.substring(0,3000);
+  var pc=(ap.match(/问题[一二三四1-4]/g)||[]).length,mc=(ap.match(/模型|算法|方法|回归|聚类|优化|预测|检验/g)||[]).length,rc=(ap.match(/结果|得到|求得|求解|计算|发现/g)||[]).length;
+  scores.A1=Math.min(0.45,0.15*(pc>=3)+0.15*(mc>=3)+0.15*(rc>=2));
+  var nc=(ap.match(/[=＝]\s*\d+\.?\d*|约?\d+\.?\d*\s*(?:千[克]|元|种|%|万)/g)||[]).length;
+  scores.A2=Math.min(0.38,0.38*Math.min(nc/4,1));
+  scores.A3=/附件[1-4]|根据附件/.test(ap)?0.12:0.22;
+  var ae=ap.length>300?ap.substring(ap.length-300):ap;
+  scores.A4=Math.min(0.22,0.08*(ae.match(/创新|特色|亮点|优势/g)||[]).length);
+  var pu=ap.replace(/摘要|摘\s*要|关键词|关键字|[\s\n]+/g,'');
+  scores.A5=pu.length>100&&pu.length<600?0.22:(pu.length<1000?0.16:0.10);
   if(scores.A1<0.30) fb.A1='摘要缺少问题→方法→结果的完整链条';
   if(scores.A2<0.25) fb.A2='摘要仅'+nc+'个数值，国一标准每个问题后紧跟具体数值';
 
-  var req = ['重述','分析','假设','符号','模型','求解','检验','评价','参考','附录'];
-  var fnd=req.filter(function(s){return text.indexOf(s)!==-1;});
-  var mis=req.filter(function(s){return text.indexOf(s)===-1;});
+  var req=['重述','分析','假设','符号','模型','求解','检验','评价','参考','附录'];
+  var fnd=req.filter(function(s){return text.indexOf(s)!==-1;}),mis=req.filter(function(s){return text.indexOf(s)===-1;});
   scores.B1=0.40*fnd.length/req.length;
   if(mis.length>2) fb.B1='缺'+mis.join('、')+'模块';
-
   var an=extract(text,['问题分析','二、问题分析'],['模型假设','三、']);
   scores.B2=Math.min(0.60,0.38+0.12*(/因为|由于|考虑到|因此|所以/.test(an))+0.10*(/思路.*图|流程.*图/.test(an)));
   if(scores.B2<0.44) fb.B2='问题分析缺少因果推理或思路流程图';
-
   scores.B3=Math.min(0.50,0.32+0.06*(text.match(/在此基础上|基于.*分析|为此|进一步|综上/g)||[]).length);
   var ase=extract(text,['模型假设','基本假设'],['符号说明','四、']);
   scores.B4=Math.min(0.50,0.35+0.10*Math.min((ase.match(/\n\s*\d+[\.\、\)）]/g)||[]).length/4,1));
@@ -226,7 +254,6 @@ function score(text, pages, fname){
   text.split('\n').forEach(function(l){l=l.trim();if(!l)return;if(/[=＝∑∏∫∂√]/.test(l))fl++;else tl++;});
   scores.C1=Math.min(0.60,0.45+0.15*Math.min(tl/Math.max(1,fl)/1.5,1));
   if(scores.C1<0.50) fb.C1='公式与文字比例失衡';
-
   scores.C2=text.indexOf('符号说明')!==-1?0.40:0.28;
   scores.C3=Math.min(0.60,0.35+0.10*(text.match(/由于.+采用|因为.+因此.+模型|考虑到.+建立/g)||[]).length);
   var pr=extract(text,['数据预处理','数据清洗','数据侧写'],['模型建立','模型构建']);
@@ -234,25 +261,20 @@ function score(text, pages, fname){
   var ms=(text.match(/\w{2,}(?:模型|算法|方法|网络|框架|体系)/g)||[]);
   scores.C5=Math.min(0.40,0.30+0.10*Math.min(new Set(ms).size/5,1));
 
-  var hs=/灵敏度|敏感性|鲁棒性|扰动|稳健性|变动率|变化率/.test(text);
-  var hv=/(?:验证|检验|测试|校验).*(?:模型|结果)/.test(text.substring(Math.max(0,text.length-5000)));
+  var hs=/灵敏度|敏感性|鲁棒性|扰动|稳健性|变动率|变化率/.test(text),hv=/(?:验证|检验|测试|校验).*(?:模型|结果)/.test(text.substring(Math.max(0,text.length-5000)));
   scores.D1=hs?0.60:(hv?0.40:0.15);
   if(scores.D1<0.50) fb.D1='缺少灵敏度分析/模型验证（阻挠省奖→国奖的第一障碍）';
-
   var sc=(text.match(/p值|p\s*[<≤]|t检验|F检验|AIC|BIC|显著性|置信区间|R[²2]|残差/g)||[]).length;
   scores.D2=Math.min(0.40,0.28+0.12*Math.min(sc/6,1));
   scores.D3=Math.min(0.40,0.25+0.15*Math.min((text.match(/相比|对比|优于|不如|提升|改进|传统方法|基准/g)||[]).length/4,1));
   var es=extract(text,['模型评价','模型的评价','模型的分析与评价','优缺点分析','六、模型的'],['参考文献','附录','七、']);
   scores.D4=0.30+0.05*(/优点|优势|长处/.test(es))+0.05*(/缺点|不足|局限/.test(es))+0.04*(/推广|改进|展望/.test(es));
 
-  var fg=(text.match(/图\s*\d+|如图|Fig/g)||[]).length;
-  var fa=(text.match(/图\s*\d+\s*(?:显示|表明|展示|反映|说明|可以|从中)/g)||[]).length;
+  var fg=(text.match(/图\s*\d+|如图|Fig/g)||[]).length,fa=(text.match(/图\s*\d+\s*(?:显示|表明|展示|反映|说明|可以|从中)/g)||[]).length;
   scores.E1=Math.min(0.50,0.35+0.15*Math.min(fa/Math.max(1,fg),1));
-  if(scores.E1<0.40) fb.E1=fg+'处图表引用但仅'+fa+'处有解析';
-
+  if(scores.E1<0.40) fb.E1=fg+'处图表引用但仅'+fa+'处有解析文';
   scores.E2=Math.max(0.25,0.30+0.10*((text.match(/我们|我[^国们]|本组/g)||[]).length/Math.max(1,text.length)*10000<2));
-  var rs=new Set(text.match(/\[\d+\]/g)||[]).size;
-  var er=(text.substring(Math.max(0,text.length-5000)).match(/[A-Z][a-z]{3,}.*\d{4}/g)||[]).length;
+  var rs=new Set(text.match(/\[\d+\]/g)||[]).size,er=(text.substring(Math.max(0,text.length-5000)).match(/[A-Z][a-z]{3,}.*\d{4}/g)||[]).length;
   scores.E3=Math.min(0.30,0.22+0.08*Math.min(rs/10,1)*0.6+0.08*Math.min(er/3,1)*0.4);
   scores.E4=/\(\d+[-\d]*\)\s*$/.test(text)?0.30:0.22;
 
@@ -263,25 +285,19 @@ function score(text, pages, fname){
   var total=+(0.20*dims['假设']+0.35*dims['建模']+0.30*dims['结果']+0.15*dims['表述']).toFixed(2);
   var t23=+Object.values(scores).reduce(function(a,b){return a+b;},0).toFixed(2);
   var award=total>=9?'稳国一':total>=8?'国一竞争力':total>=7?'国二':total>=6?'省一':total>=5?'省二~省三':'需大幅改进';
-
   return {fname:fname,pages:pages,chars:text.length,total:total,t23:t23,award:award,dims:dims,dl:dl,scores:scores,fb:fb,found:fnd,missing:mis,mv:mv};
 }
 
 function extract(text,starts,ends){
   for(var i=0;i<starts.length;i++){
-    var idx=text.indexOf(starts[i]);
-    if(idx===-1) continue;
+    var idx=text.indexOf(starts[i]);if(idx===-1)continue;
     var end=idx+3000;
-    for(var j=0;j<ends.length;j++){
-      var ei=text.indexOf(ends[j],idx+starts[i].length);
-      if(ei!==-1&&ei<end) end=ei;
-    }
+    for(var j=0;j<ends.length;j++){var ei=text.indexOf(ends[j],idx+starts[i].length);if(ei!==-1&&ei<end)end=ei;}
     return text.substring(idx,Math.min(end,text.length));
   }
   return '';
 }
 
-// ====== STEP 5: Render results ======
 function render(r){
   var awc={'稳国一':'#2f5496','国一竞争力':'#3b82f6','国二':'#38a169','省一':'#d69e2e','省二~省三':'#ed8936','需大幅改进':'#e53e3e'};
   var dc={'假设':'#3182ce','建模':'#805ad5','结果':'#38a169','表述':'#dd6b20'};
@@ -302,23 +318,19 @@ function render(r){
   h+='</div></div>';
 
   var fkeys=Object.keys(r.fb);
-  if(fkeys.length>0){
-    h+='<div class="card"><b style="color:#e53e3e">⚡ 优先修改项</b>';
-    fkeys.slice(0,5).forEach(function(k){h+='<div class="fb"><b>'+k+':</b> '+r.fb[k]+'</div>';});
-    h+='</div>';
-  }
+  if(fkeys.length>0){h+='<div class="card"><b style="color:var(--accent)">优先修改项</b>';
+    fkeys.slice(0,5).forEach(function(k){h+='<div class="fb"><b>'+k+':</b> '+r.fb[k]+'</div>';});h+='</div>';}
 
   h+='<div class="card"><b>23项细化评分</b>';
-  od.forEach(function(d){var dn=d[0],ks=d[1];
-    h+='<h4 style="margin:12px 0 4px;color:#4a5568">'+dn+'</h4><table><tr><th>#</th><th>评分项</th><th>得分</th><th>满分</th><th>达成率</th></tr>';
-    ks.forEach(function(k){var sc=r.scores[k]||0,mx=r.mv[k],rate=(sc/mx*100).toFixed(0),gc=rate>=90?'rate-A':rate>=70?'rate-B':rate>=50?'rate-C':'rate-D';
+  od.forEach(function(d){
+    h+='<h4 style="margin:12px 0 4px;color:#4a5568">'+d[0]+'</h4><table><tr><th>#</th><th>评分项</th><th>得分</th><th>满分</th><th>达成率</th></tr>';
+    d[1].forEach(function(k){var sc=r.scores[k]||0,mx=r.mv[k],rate=(sc/mx*100).toFixed(0),gc=rate>=90?'rate-A':rate>=70?'rate-B':rate>=50?'rate-C':'rate-D';
       h+='<tr><td>'+k+'</td><td>'+nm[k]+'</td><td>'+sc.toFixed(2)+'</td><td>'+mx.toFixed(2)+'</td><td class="'+gc+'">'+rate+'%</td></tr>';});
     h+='</table>';});
   h+='</div>';
 
   h+='<div style="text-align:center;padding:12px"><button class="btn" style="background:#718096" onclick="location.reload()">重新上传</button></div>';
-  document.getElementById('results').innerHTML=h;
-  document.getElementById('results').style.display='block';
+  document.getElementById('results').innerHTML=h;document.getElementById('results').style.display='block';
 }
 </script>
 </body>
